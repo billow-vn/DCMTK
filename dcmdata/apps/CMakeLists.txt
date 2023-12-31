@@ -16,5 +16,5 @@ foreach(PROGRAM dcm2xml dcmconv dcmcrle dcmdrle dcmdump dcmgpdir dcmodify dump2d
 endforeach()
 
 DCMTK_TARGET_LINK_MODULES(dcmftest ofstd)
-DCMTK_TARGET_LINK_LIBRARIES(xml2dcm ${LIBXML_LIBS})
 DCMTK_TARGET_LINK_MODULES(img2dcm i2d dcmdata)
+DCMTK_TARGET_LINK_MODULES(xml2dcm dcmxml dcmdata oflog ofstd)

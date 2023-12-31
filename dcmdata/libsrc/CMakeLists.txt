@@ -24,6 +24,7 @@ DCMTK_ADD_LIBRARY(dcmdata
   dcistrma.cc
   dcistrmb.cc
   dcistrmf.cc
+  dcistrms.cc
   dcistrmz.cc
   dcitem.cc
   dcjson.cc
@@ -34,6 +35,7 @@ DCMTK_ADD_LIBRARY(dcmdata
   dcostrma.cc
   dcostrmb.cc
   dcostrmf.cc
+  dcostrms.cc
   dcostrmz.cc
   dcpath.cc
   dcpcache.cc
@@ -92,7 +94,7 @@ DCMTK_ADD_LIBRARY(dcmdata
   dcxfer.cc
   vrscan.cc
   vrscanl.c
-  )
+)
 
 DCMTK_TARGET_LINK_MODULES(dcmdata ofstd oflog)
 DCMTK_TARGET_LINK_LIBRARIES(dcmdata ${ZLIB_LIBS})
@@ -105,25 +107,25 @@ set(DICTIONARIES "${DICOMDIC}" "${PRIVATEDIC}")
 if(BUILD_APPS)
   # don't use DCMTK_ADD_EXECUTABLE() since we don't want to install the files
   add_executable(mkdictbi EXCLUDE_FROM_ALL
+    cmdlnarg.cc
+    dcdicent.cc
+    dcdict.cc
+    dchashdi.cc
+    dctagkey.cc
+    dctypes.cc
+    dcvr.cc
     mkdictbi.cc
-    dctagkey.cc
-    dcdicent.cc
-    dcdict.cc
-    dcvr.cc
-    dchashdi.cc
-    cmdlnarg.cc
-    dctypes.cc
-    )
+  )
   add_executable(mkdeftag EXCLUDE_FROM_ALL
-    mkdeftag.cc
-    dctagkey.cc
+    cmdlnarg.cc
     dcdicent.cc
     dcdict.cc
-    dcvr.cc
     dchashdi.cc
-    cmdlnarg.cc
+    dctagkey.cc
     dctypes.cc
-    )
+    dcvr.cc
+    mkdeftag.cc
+  )
   # workaround for Visual Studio to disable dll storage specifiers when linking directly into the executable.
   # this is needed since the built-in dictionary code is created by the tools below and thus those tools
   # statically link the few required dcmdata source files instead of linking to dcmdata as a whole.

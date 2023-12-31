@@ -7,26 +7,23 @@ DCMTK_ADD_LIBRARY(dcmdsig
   sicert.cc
   sicertvf.cc
   sicreapr.cc
-  sidsa.cc
-  siecdsa.cc
   simaccon.cc
-  simd5.cc
+  simdmac.cc
   sinullpr.cc
+  sipkey.cc
   siprivat.cc
   sipurpos.cc
-  siripemd.cc
-  sirsa.cc
-  sisha1.cc
   sisprof.cc
   sisrpr.cc
   sisrvpr.cc
+  sitsfs.cc
   sitstamp.cc
   sitypes.cc
-  sisha256.cc
-  sisha384.cc
-  sisha512.cc
-  sitsfs.cc
 )
 
 DCMTK_TARGET_LINK_MODULES(dcmdsig ofstd dcmdata)
 DCMTK_TARGET_LINK_LIBRARIES(dcmdsig ${OPENSSL_LIBS})
+
+if (TARGET dcmdsig)
+  set_property(TARGET dcmdsig PROPERTY OUTPUT_NAME "dcmdsig${DCMTK_TLS_LIBRARY_POSTFIX}")
+endif()

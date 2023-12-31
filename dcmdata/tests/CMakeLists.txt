@@ -1,31 +1,33 @@
 # declare executables
 DCMTK_ADD_EXECUTABLE(dcmdata_tests
-  tests.cc
-  tpread.cc
-  ti2dbmp.cc
   tchval.cc
-  tpath.cc
-  tvrdatim.cc
-  telemlen.cc
-  tparser.cc
   tdict.cc
-  tvrds.cc
-  tvrfd.cc
-  tvrpn.cc
-  tvrui.cc
-  tvrol.cc
-  tvrov.cc
-  tvrsv.cc
-  tvruv.cc
-  tstrval.cc
-  tspchrs.cc
-  tparent.cc
+  telemlen.cc
+  tests.cc
   tfilter.cc
-  tvrcomp.cc
+  tgenuid.cc
+  ti2dbmp.cc
+  titem.cc
   tmatch.cc
   tnewdcme.cc
-  tgenuid.cc
+  tparent.cc
+  tparser.cc
+  tpath.cc
+  tpread.cc
   tsequen.cc
+  tspchrs.cc
+  tstrval.cc
+  ttag.cc
+  tvrcomp.cc
+  tvrdatim.cc
+  tvrds.cc
+  tvrfd.cc
+  tvrol.cc
+  tvrov.cc
+  tvrpn.cc
+  tvrsv.cc
+  tvrui.cc
+  tvruv.cc
 )
 
 # make sure executables are linked to the corresponding libraries
