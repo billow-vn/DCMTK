@@ -69,7 +69,7 @@ OFBool DJLSDecoderBase::canChangeCoding(
   // this codec only handles conversion from JPEG-LS to uncompressed.
 
   DcmXfer newRep(newRepType);
-  if (newRep.isNotEncapsulated() && (oldRepType == supportedTransferSyntax()))
+  if (newRep.usesNativeFormat() && (oldRepType == supportedTransferSyntax()))
      return OFTrue;
 
   return OFFalse;
@@ -211,7 +211,7 @@ OFCondition DJLSDecoderBase::decode(
   if (result.good() && (numberOfFramesPresent || (imageFrames > 1)))
   {
     char numBuf[20];
-    sprintf(numBuf, "%ld", OFstatic_cast(long, imageFrames));
+    OFStandard::snprintf(numBuf, sizeof(numBuf), "%ld", OFstatic_cast(long, imageFrames));
     result = ((DcmItem *)dataset)->putAndInsertString(DCM_NumberOfFrames, numBuf);
   }
 

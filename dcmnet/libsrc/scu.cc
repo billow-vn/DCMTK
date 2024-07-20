@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2008-2023, OFFIS e.V.
+ *  Copyright (C) 2008-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -26,6 +26,7 @@
 #include "dcmtk/dcmnet/diutil.h"    /* for dcmnet logger */
 #include "dcmtk/dcmnet/scu.h"
 #include "dcmtk/ofstd/ofmem.h" /* for OFunique_ptr */
+#include "dcmtk/ofstd/ofstd.h"
 
 
 #ifdef WITH_ZLIB
@@ -55,6 +56,7 @@ DcmSCU::DcmSCU()
     , m_verbosePCMode(OFFalse)
     , m_datasetConversionMode(OFFalse)
     , m_progressNotificationMode(OFTrue)
+    , m_secureConnectionEnabled(OFFalse)
 {
     OFStandard::initializeNetwork();
 }
@@ -149,7 +151,7 @@ OFCondition DcmSCU::initNetwork()
         DCMNET_ERROR("Maximum length of local host name '" << localHost << "' is longer than maximum of 62 characters");
         return EC_IllegalCall; // TODO: need to find better error code
     }
-    sprintf(peerHost, "%s:%d", m_peer.c_str(), OFstatic_cast(int, m_peerPort));
+    OFStandard::snprintf(peerHost, sizeof(peerHost), "%s:%d", m_peer.c_str(), OFstatic_cast(int, m_peerPort));
     ASC_setPresentationAddresses(m_params, localHost.c_str(), peerHost);
 
     /* Add presentation contexts */
@@ -337,6 +339,8 @@ OFCondition DcmSCU::useSecureConnection(DcmTransportLayer* tlayer)
     OFCondition cond = ASC_setTransportLayer(m_net, tlayer, OFFalse /* do not take over ownership */);
     if (cond.good())
         cond = ASC_setTransportLayerType(m_params, OFTrue /* use TLS */);
+
+    if (cond.good()) m_secureConnectionEnabled = OFTrue;
     return cond;
 }
 
@@ -1619,7 +1623,7 @@ OFCondition DcmSCU::sendCANCELRequest(const T_ASC_PresentationContextID presID,
     if (!isConnected())
         return DIMSE_ILLEGALASSOCIATION;
 
-    if (msgIDBeingRespondedTo > OFstatic_cast(Sint32,UINT16_MAX) || msgIDBeingRespondedTo < -1)
+    if (msgIDBeingRespondedTo > 65535 || msgIDBeingRespondedTo < -1)
         return EC_IllegalParameter;
 
     /* Prepare DIMSE data structures for issuing request */
@@ -2607,7 +2611,7 @@ Uint32 DcmSCU::getMaxReceivePDULength() const
 
 OFBool DcmSCU::getTLSEnabled() const
 {
-    return OFFalse;
+    return m_secureConnectionEnabled;
 }
 
 T_DIMSE_BlockingMode DcmSCU::getDIMSEBlockingMode() const

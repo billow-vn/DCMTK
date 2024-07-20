@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2016-2023, Open Connections GmbH
+ *  Copyright (C) 2016-2024, Open Connections GmbH
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation are maintained by
@@ -22,6 +22,11 @@
 #include "dcmtk/config/osconfig.h"
 #include "dcmtk/dcmpmap/dpmparametricmapiod.h"
 #include "dcmtk/dcmiod/iodutil.h"
+#include "dcmtk/dcmdata/dcvrobow.h"
+#include "dcmtk/dcmdata/dcvrfl.h"
+#include "dcmtk/dcmdata/dcvrfd.h"
+#include "dcmtk/dcmdata/dcuid.h"
+
 
 // ----------------------------------------------------------------------------
 // Class SetImagePixelModuleVisitor:
@@ -988,15 +993,16 @@ OFCondition DPMParametricMapIOD::decompress(DcmDataset& dset)
   // If the original transfer syntax could have been lossy, print warning
   if (dset.hasRepresentation(EXS_LittleEndianExplicit, NULL))
   {
-    if ( xfer.isEncapsulated() && (xfer != EXS_RLELossless) && (xfer != EXS_DeflatedLittleEndianExplicit) )
+    if (xfer.isPixelDataCompressed() && (xfer != EXS_RLELossless))
     {
       DCMPMAP_WARN("Dataset has been compressed using a (possibly) lossy compression scheme (ignored)");
     }
   }
-  // If the original transfer is encapsulated and we do not already have an uncompressed version, decompress or reject the file
-  else if (xfer.isEncapsulated())
+  // If the original transfer syntax refers to compressed pixel data and we do not
+  // already have an uncompressed version, decompress or reject the file
+  else if (xfer.isPixelDataCompressed())
   {
-    // RLE compression is fine (truly lossless). Deflated is handled internally by DCMTK.
+    // RLE compression is fine (truly lossless)
     if (xfer == EXS_RLELossless)
     {
       DCMPMAP_DEBUG("DICOM file is RLE-compressed, converting to uncompressed transfer syntax first");

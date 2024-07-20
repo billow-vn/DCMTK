@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2011-2023, OFFIS e.V.
+ *  Copyright (C) 2011-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -244,17 +244,13 @@ OFCondition DcmSpecificCharacterSet::determineDestinationEncoding(const OFString
     else if (DestinationCharacterSet == "ISO_IR 203")   // Latin alphabet No. 9
         DestinationEncoding = "ISO-8859-15";
     else if (DestinationCharacterSet == "ISO_IR 13")    // Japanese
-#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICONV
+#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICONV || DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_OFICONV
         DestinationEncoding = "JIS_X0201";              // - the name "ISO-IR-13" is not supported by libiconv
 #else
-        DestinationEncoding = "Shift_JIS";              // - ICU and stdlibc iconv only know "Shift_JIS", which is a superset of JIS X0201
+        DestinationEncoding = "Shift_JIS";              // - stdlibc iconv only knows "Shift_JIS", which is a superset of JIS X0201
 #endif
     else if (DestinationCharacterSet == "ISO_IR 166")   // Thai
-#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICU
-        DestinationEncoding = "TIS-620";                // - the name "ISO-IR-166" is not supported by ICU
-#else
         DestinationEncoding = "ISO-IR-166";
-#endif
     else if (DestinationCharacterSet == "ISO_IR 192")   // Unicode in UTF-8 (multi-byte)
         DestinationEncoding = "UTF-8";
     else if (DestinationCharacterSet == "GB18030")      // Chinese (multi-byte)
@@ -307,17 +303,13 @@ OFCondition DcmSpecificCharacterSet::selectCharacterSetWithoutCodeExtensions()
     else if (SourceCharacterSet == "ISO_IR 203")    // Latin alphabet No. 9
         fromEncoding = "ISO-8859-15";
     else if (SourceCharacterSet == "ISO_IR 13")     // Japanese
-#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICONV
+#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICONV || DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_OFICONV
         fromEncoding = "JIS_X0201";                 // - the name "ISO-IR-13" is not supported by libiconv
 #else
-        fromEncoding = "Shift_JIS";                 // - ICU and stdlibc iconv only know "Shift_JIS", which is a superset of JIS X0201
+        fromEncoding = "Shift_JIS";                 // - stdlibc iconv only knows "Shift_JIS", which is a superset of JIS X0201
 #endif
     else if (SourceCharacterSet == "ISO_IR 166")    // Thai
-#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICU
-        fromEncoding = "TIS-620";                   // - the name "ISO-IR-166" is not supported by ICU
-#else
         fromEncoding = "ISO-IR-166";
-#endif
     else if (SourceCharacterSet == "ISO_IR 192")    // Unicode in UTF-8 (multi-byte)
         fromEncoding = "UTF-8";
     else if (SourceCharacterSet == "GB18030")       // Chinese (multi-byte)
@@ -421,29 +413,25 @@ OFCondition DcmSpecificCharacterSet::selectCharacterSetWithCodeExtensions(const 
         }
         else if (definedTerm == "ISO 2022 IR 13")       // Japanese
         {
-#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICONV
+#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICONV || DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_OFICONV
             encodingName = "JIS_X0201";                 // - the name "ISO-IR-13" is not supported by libiconv
 #else
-            encodingName = "Shift_JIS";                 // - ICU and stdlibc iconv only know "Shift_JIS", which is a superset of JIS X0201
+            encodingName = "Shift_JIS";                 // - stdlibc iconv only knows "Shift_JIS", which is a superset of JIS X0201
 #endif
         }
         else if (definedTerm == "ISO 2022 IR 166")      // Thai
         {
-#if DCMTK_ENABLE_CHARSET_CONVERSION == DCMTK_CHARSET_CONVERSION_ICU
-            encodingName = "TIS-620";                   // - "ISO-IR-166" is not supported by ICU
-#else
             encodingName = "ISO-IR-166";
-#endif
             needsASCII = OFTrue;
         }
         else if (definedTerm == "ISO 2022 IR 87")       // Japanese (multi-byte), JIS X0208
         {
-            encodingName = "ISO-IR-87";                 // - this might generate an error since "ISO-IR-87" is not supported by ICU and stdlibc iconv
+            encodingName = "ISO-IR-87";                 // - this might generate an error since "ISO-IR-87" is not supported by stdlibc iconv
             notFirstValue = OFTrue;
         }
         else if (definedTerm == "ISO 2022 IR 159")      // Japanese (multi-byte), JIS X0212
         {
-            encodingName = "ISO-IR-159";                // - this might generate an error since "ISO-IR-159" is not supported by ICU and stdlibc iconv
+            encodingName = "ISO-IR-159";                // - this might generate an error since "ISO-IR-159" is not supported by stdlibc iconv
             notFirstValue = OFTrue;
         }
         else if (definedTerm == "ISO 2022 IR 149")      // Korean (multi-byte)
@@ -453,7 +441,7 @@ OFCondition DcmSpecificCharacterSet::selectCharacterSetWithCodeExtensions(const 
         }
         else if (definedTerm == "ISO 2022 IR 58")       // Simplified Chinese (multi-byte)
         {
-            encodingName = "GB2312";                    // - should work, but not tested yet!
+            encodingName = "GB2312";
             notFirstValue = OFTrue;
         }
         else {
@@ -552,10 +540,70 @@ OFCondition DcmSpecificCharacterSet::convertString(const char *fromString,
     const OFBool hasEscapeChar = checkForEscapeCharacter(fromString, fromLength);
     if (EncodingConverters.empty() || (!hasEscapeChar && delimiters.empty()))
     {
-        DCMDATA_DEBUG("DcmSpecificCharacterSet: Converting '"
-            << convertToLengthLimitedOctalString(fromString, fromLength) << "'");
-        // no code extensions according to ISO 2022 used - this is the simple case
-        status = DefaultEncodingConverter.convertString(fromString, fromLength, toString, OFTrue /*clearMode*/);
+        if (delimiters.empty())
+        {
+            // no code extensions according to ISO 2022 used and no delimiters - this is the simple case
+            DCMDATA_DEBUG("DcmSpecificCharacterSet: Converting '"
+                << convertToLengthLimitedOctalString(fromString, fromLength) << "'");
+            status = DefaultEncodingConverter.convertString(fromString, fromLength, toString, OFTrue /*clearMode*/);
+        } else {
+            // no code extensions according to ISO 2022 used, but delimiters
+            DCMDATA_DEBUG("DcmSpecificCharacterSet: Converting '"
+                << convertToLengthLimitedOctalString(fromString, fromLength)
+                << "' (with delimiters '" << delimiters << "')");
+
+            toString.clear();
+            size_t pos = 0;
+            const char *firstChar = fromString;
+            const char *currentChar = fromString;
+
+            // iterate over all characters of the string (as long as there is no error)
+            while ((pos < fromLength) && status.good())
+            {
+                const char c0 = *currentChar++;
+
+                // check for characters ESC, HT, LF, FF, CR or any other specified delimiter
+                if ((c0 == '\011') || (c0 == '\012') || (c0 == '\014') || (c0 == '\015') || (delimiters.find(c0) != OFString_npos))
+                {
+                    // convert the sub-string (before the delimiter) with the current character set
+                    const size_t convertLength = currentChar - firstChar - 1;
+                    if (convertLength > 0)
+                    {
+                        // output some debug information
+                        DCMDATA_TRACE("    Converting sub-string '"
+                            << convertToLengthLimitedOctalString(firstChar, convertLength) << "'");
+                        status = DefaultEncodingConverter.convertString(firstChar, convertLength, toString, OFFalse /*clearMode*/);
+                        if (status.bad())
+                            DCMDATA_TRACE("    -> ERROR: " << status.text());
+                    }
+
+                    // output some debug information
+                    DCMDATA_TRACE("    Appending delimiter '"
+                        << convertToLengthLimitedOctalString(currentChar - 1 /* identical to c0 */, 1)
+                        << "' to the output");
+                    // don't forget to append the delimiter
+                    toString += c0;
+
+                    // start new sub-string after delimiter
+                    firstChar = currentChar;
+                }
+                ++pos;
+            }
+            if (status.good())
+            {
+                // convert any remaining characters from the input string
+                const size_t convertLength = currentChar - firstChar;
+                if (convertLength > 0)
+                {
+                    // output some debug information
+                    DCMDATA_TRACE("    Converting remaining sub-string '"
+                        << convertToLengthLimitedOctalString(firstChar, convertLength) << "'");
+                    status = DefaultEncodingConverter.convertString(firstChar, convertLength, toString, OFFalse /*clearMode*/);
+                    if (status.bad())
+                        DCMDATA_TRACE("    -> ERROR: " << status.text());
+                }
+            }
+        }
     } else {
         if (delimiters.empty())
         {

@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2003-2022, OFFIS e.V.
+ *  Copyright (C) 2003-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -82,7 +82,7 @@ extern "C" void xml2dcm_errorFunction(void * /* ctx */, const char *msg, ...)
 
         pos = buffer.find('\n');
     }
-#elif defined(HAVE_VPRINTF)
+#else
     // No vsnprint, but at least vfprintf. Output the messages directly to stderr.
     va_list ap;
     va_start(ap, msg);
@@ -92,9 +92,6 @@ extern "C" void xml2dcm_errorFunction(void * /* ctx */, const char *msg, ...)
     vfprintf(stderr, msg, ap);
 #endif
     va_end(ap);
-#else
-    // We can only show the most basic part of the message, this will look bad :(
-    printf("%s", msg);
 #endif
 }
 
@@ -125,6 +122,12 @@ void DcmXMLParseHelper::initLibrary()
     /* initialize the XML library (only required for MT-safety) */
     xmlInitParser();
 
+#if LIBXML_VERSION < 20703
+    /*
+     * the following settings have been deprecated in newer versions of libxml,
+     * or they are not needed any more:
+     */
+
     /* do not substitute entities (other than the standard ones) */
     xmlSubstituteEntitiesDefault(0);
 
@@ -133,10 +136,13 @@ void DcmXMLParseHelper::initLibrary()
 
     /* enable node indenting for tree output */
     xmlIndentTreeOutput = 1;
+
+    /* remove ignorable whitespace */
     xmlKeepBlanksDefault(0);
 
     /* enable libxml warnings and error messages */
     xmlGetWarningsDefaultValue = 1;
+#endif
 }
 
 
@@ -696,8 +702,11 @@ OFCondition DcmXMLParseHelper::readXmlFile(
     /*
      *  Starting with libxml version 2.7.3, the maximum length of XML element values
      *  is limited to 10 MB.  The following code disables this default limitation.
+     *
+     *  Other flags are now also passed to the function instead of using global
+     *  settings (some of them have been deprecated, see initLibrary()).
      */
-    xmlDocPtr doc = xmlReadFile(ifname, NULL /*encoding*/, XML_PARSE_HUGE);
+    xmlDocPtr doc = xmlReadFile(ifname, NULL /*encoding*/, XML_PARSE_HUGE | XML_PARSE_NOBLANKS | XML_PARSE_NONET);
 #else
     xmlDocPtr doc = xmlParseFile(ifname);
 #endif

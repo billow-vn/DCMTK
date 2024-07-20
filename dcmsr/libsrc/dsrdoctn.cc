@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2022, OFFIS e.V.
+ *  Copyright (C) 2000-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -79,24 +79,6 @@ DSRDocumentTreeNode::~DSRDocumentTreeNode()
 }
 
 
-OFBool DSRDocumentTreeNode::operator==(const DSRDocumentTreeNode &node) const
-{
-    /* only very basic information is used for comparing the two nodes */
-    return (RelationshipType == node.RelationshipType) &&
-           (ValueType == node.ValueType) &&
-           (ConceptName == node.ConceptName);
-}
-
-
-OFBool DSRDocumentTreeNode::operator!=(const DSRDocumentTreeNode &node) const
-{
-    /* only very basic information is used for comparing the two nodes */
-    return (RelationshipType != node.RelationshipType) ||
-           (ValueType != node.ValueType) ||
-           (ConceptName != node.ConceptName);
-}
-
-
 void DSRDocumentTreeNode::clear()
 {
     MarkFlag = OFFalse;
@@ -109,6 +91,24 @@ void DSRDocumentTreeNode::clear()
     MappingResourceUID.clear();
     MACParameters.clear();
     DigitalSignatures.clear();
+}
+
+
+OFBool DSRDocumentTreeNode::isEqual(const DSRDocumentTreeNode &node) const
+{
+    /* only very basic information is used for comparing the two nodes */
+    return (RelationshipType == node.RelationshipType) &&
+           (ValueType == node.ValueType) &&
+           (ConceptName == node.ConceptName);
+}
+
+
+OFBool DSRDocumentTreeNode::isNotEqual(const DSRDocumentTreeNode &node) const
+{
+    /* only very basic information is used for comparing the two nodes */
+    return (RelationshipType != node.RelationshipType) ||
+           (ValueType != node.ValueType) ||
+           (ConceptName != node.ConceptName);
 }
 
 
@@ -971,7 +971,7 @@ OFCondition DSRDocumentTreeNode::readContentSequence(DcmItem &dataset,
             OFString location = posString;
             if (!location.empty())
                 location += ".";
-            location += numberToString(OFstatic_cast(size_t, i + 1), buffer);
+            location += numberToString(OFstatic_cast(size_t, i + 1), buffer, sizeof(buffer));
             if (flags & RF_showCurrentlyProcessedItem)
                 DCMSR_INFO("Processing content item " << location);
             /* read RelationshipType */
@@ -1389,4 +1389,20 @@ OFBool DSRDocumentTreeNode::checkTemplateIdentification(const OFString &template
     else if (!templateIdentifier.empty() && !mappingResource.empty())
         result = OFTrue;
     return result;
+}
+
+
+// comparison operators
+
+OFBool operator==(const DSRDocumentTreeNode &lhs,
+                  const DSRDocumentTreeNode &rhs)
+{
+    return lhs.isEqual(rhs);
+}
+
+
+OFBool operator!=(const DSRDocumentTreeNode &lhs,
+                  const DSRDocumentTreeNode &rhs)
+{
+    return lhs.isNotEqual(rhs);
 }

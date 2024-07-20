@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2023, OFFIS e.V.
+ *  Copyright (C) 2000-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -547,8 +547,10 @@ class DCMTK_DCMSR_EXPORT DSRTypes
         DT_PlannedImagingAgentAdministrationSR,
         /// DICOM IOD: Rendition Selection Document
         DT_RenditionSelectionDocument,
+        /// DICOM IOD: Waveform Annotation SR
+        DT_WaveformAnnotationSR,
         /// internal type used to mark the last entry
-        DT_last = DT_RenditionSelectionDocument
+        DT_last = DT_WaveformAnnotationSR
     };
 
     /** SR relationship types
@@ -1247,11 +1249,13 @@ class DCMTK_DCMSR_EXPORT DSRTypes
     /** convert unsigned integer number to character string
      ** @param  number       unsigned integer number to be converted
      *  @param  stringValue  character string used to store the result
+     *  @param  stringLength size of the character string buffer used to store the result
      ** @return pointer to the first character of the resulting string
      *          (may be NULL if 'string' was NULL)
      */
     static const char *numberToString(const size_t number,
-                                      char *stringValue);
+                                      char *stringValue,
+                                      size_t stringLength);
 
     /** convert string to unsigned integer number
      ** @param  stringValue  character string to be converted

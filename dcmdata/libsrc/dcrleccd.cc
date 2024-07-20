@@ -21,6 +21,7 @@
 
 #include "dcmtk/config/osconfig.h"
 #include "dcmtk/dcmdata/dcrleccd.h"
+#include "dcmtk/ofstd/ofstd.h"
 
 // dcmdata includes
 #include "dcmtk/dcmdata/dcrlecp.h"   /* for class DcmRLECodecParameter */
@@ -51,7 +52,8 @@ OFBool DcmRLECodecDecoder::canChangeCoding(
 {
   E_TransferSyntax myXfer = EXS_RLELossless;
   DcmXfer newRep(newRepType);
-  if (newRep.isNotEncapsulated() && (oldRepType == myXfer)) return OFTrue; // decompress requested
+  if (newRep.usesNativeFormat() && (oldRepType == myXfer))
+    return OFTrue; // decompress requested
 
   // we don't support re-coding for now.
   return OFFalse;
@@ -432,7 +434,7 @@ OFCondition DcmRLECodecDecoder::decode(
           if (result.good() && (numberOfFramesPresent || (imageFrames > 1)))
           {
             char numBuf[20];
-            sprintf(numBuf, "%ld", OFstatic_cast(long, imageFrames));
+            OFStandard::snprintf(numBuf, sizeof(numBuf), "%ld", OFstatic_cast(long, imageFrames));
             result = OFstatic_cast(DcmItem *, dataset)->putAndInsertString(DCM_NumberOfFrames, numBuf);
           }
         }

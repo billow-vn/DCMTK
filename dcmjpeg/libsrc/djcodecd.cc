@@ -21,6 +21,7 @@
 
 #include "dcmtk/config/osconfig.h"
 #include "dcmtk/dcmjpeg/djcodecd.h"
+#include "dcmtk/ofstd/ofstd.h"
 
 // dcmdata includes
 #include "dcmtk/dcmdata/dcdatset.h"  /* for class DcmDataset */
@@ -53,7 +54,8 @@ OFBool DJCodecDecoder::canChangeCoding(
 {
   E_TransferSyntax myXfer = supportedTransferSyntax();
   DcmXfer newRep(newRepType);
-  if (newRep.isNotEncapsulated() && (oldRepType == myXfer)) return OFTrue; // decompress requested
+  if (newRep.usesNativeFormat() && (oldRepType == myXfer))
+    return OFTrue; // decompress requested
 
   // we don't support re-coding for now.
   return OFFalse;
@@ -341,7 +343,7 @@ OFCondition DJCodecDecoder::decode(
                   if (result.good() && (numberOfFramesPresent || (imageFrames > 1)))
                   {
                     char numBuf[20];
-                    sprintf(numBuf, "%ld", OFstatic_cast(long, imageFrames));
+                    OFStandard::snprintf(numBuf, sizeof(numBuf), "%ld", OFstatic_cast(long, imageFrames));
                     result = OFreinterpret_cast(DcmItem*, dataset)->putAndInsertString(DCM_NumberOfFrames, numBuf);
                   }
 

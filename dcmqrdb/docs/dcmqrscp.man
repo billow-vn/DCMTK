@@ -422,6 +422,127 @@ specific character set:
           in destination character set
 \endverbatim
 
+\subsection dcmqrscp_tls_options transport layer security (TLS) options
+\verbatim
+transport protocol stack:
+
+  -tls  --disable-tls
+          use normal TCP/IP connection (default)
+
+  +tls  --enable-tls  [p]rivate key file, [c]ertificate file: string
+          use authenticated secure TLS connection
+
+private key password (only with --enable-tls):
+
+  +ps   --std-passwd
+          prompt user to type password on stdin (default)
+
+  +pw   --use-passwd  [p]assword: string
+          use specified password
+
+  -pw   --null-passwd
+          use empty string as password
+
+key and certificate file format:
+
+  -pem  --pem-keys
+          read keys and certificates as PEM file (default)
+
+  -der  --der-keys
+          read keys and certificates as DER file
+
+certification authority:
+
+  +cf   --add-cert-file  [f]ilename: string
+          add certificate file to list of certificates
+
+  +cd   --add-cert-dir  [d]irectory: string
+          add certificates in d to list of certificates
+
+  +crl  --add-crl-file  [f]ilename: string
+          add certificate revocation list file
+          (implies --enable-crl-vfy)
+
+  +crv  --enable-crl-vfy
+          enable leaf CRL verification
+
+  +cra  --enable-crl-all
+          enable full chain CRL verification
+
+security profile:
+
+  +pg   --profile-8996
+          BCP 195 RFC 8996 TLS Profile (default)
+
+  +pm   --profile-8996-mod
+          Modified BCP 195 RFC 8996 TLS Profile
+
+          # only available if underlying TLS library supports
+          # all TLS features required for this profile
+
+  +py   --profile-bcp195-nd
+          Non-downgrading BCP 195 TLS Profile (retired)
+
+  +px   --profile-bcp195
+          BCP 195 TLS Profile (retired)
+
+  +pz   --profile-bcp195-ex
+          Extended BCP 195 TLS Profile (retired)
+
+  +pb   --profile-basic
+          Basic TLS Secure Transport Connection Profile (retired)
+
+          # only available if underlying TLS library supports 3DES
+
+  +pa   --profile-aes
+          AES TLS Secure Transport Connection Profile (retired)
+
+  +pn   --profile-null
+          Authenticated unencrypted communication
+          (retired, was used in IHE ATNA)
+
+ciphersuite:
+
+  +cc   --list-ciphers
+          list supported TLS ciphersuites and exit
+
+  +cs   --cipher  [c]iphersuite name: string
+          add ciphersuite to list of negotiated suites
+
+  +dp   --dhparam  [f]ilename: string
+          read DH parameters for DH/DSS ciphersuites
+
+server name indication:
+
+        --no-sni
+          do not use SNI (default)
+
+        --expect-sni  [s]erver name: string
+          expect requests for server name s
+
+pseudo random generator:
+
+  +rs   --seed  [f]ilename: string
+          seed random generator with contents of f
+
+  +ws   --write-seed
+          write back modified seed (only with --seed)
+
+  +wf   --write-seed-file  [f]ilename: string (only with --seed)
+          write modified seed to file f
+
+peer authentication:
+
+  -rc   --require-peer-cert
+          verify peer certificate, fail if absent (default)
+
+  -vc   --verify-peer-cert
+          verify peer certificate if present
+
+  -ic   --ignore-peer-cert
+          don't verify peer certificate
+\endverbatim
+
 \subsection dcmqrscp_output_options output options
 \verbatim
 bit preserving mode:
@@ -674,7 +795,7 @@ Depending on these options, the following transfer syntaxes are supported:
 \verbatim
 LittleEndianImplicitTransferSyntax                   1.2.840.10008.1.2
 LittleEndianExplicitTransferSyntax                   1.2.840.10008.1.2.1
-DeflatedExplicitVRLittleEndianTransferSyntax         1.2.840.10008.1.2.1.99
+DeflatedExplicitVRLittleEndianTransferSyntax         1.2.840.10008.1.2.1.99 (*)
 BigEndianExplicitTransferSyntax                      1.2.840.10008.1.2.2
 JPEGProcess1TransferSyntax                           1.2.840.10008.1.2.4.50
 JPEGProcess2_4TransferSyntax                         1.2.840.10008.1.2.4.51
@@ -694,6 +815,8 @@ HEVCMainProfileLevel5_1TransferSyntax                1.2.840.10008.1.2.4.107
 HEVCMain10ProfileLevel5_1TransferSyntax              1.2.840.10008.1.2.4.108
 RLELosslessTransferSyntax                            1.2.840.10008.1.2.5
 \endverbatim
+
+(*) if compiled with zlib support enabled (see \e --version output)
 
 The \b dcmqrscp application does not support extended negotiation.
 
@@ -824,6 +947,8 @@ OphthalmicOpticalCoherenceTomogr.EnFaceImageStorage  1.2.840.10008.5.1.4.1.1.77.
 OphthalmicOpticalCoh.Tomogr.BscanVolumeAnalysisStor. 1.2.840.10008.5.1.4.1.1.77.1.5.8
 VLWholeSlideMicroscopyImageStorage                   1.2.840.10008.5.1.4.1.1.77.1.6
 DermoscopicPhotographyImageStorage                   1.2.840.10008.5.1.4.1.1.77.1.7
+ConfocalMicroscopyImageStorage                       1.2.840.10008.5.1.4.1.1.77.1.8
+ConfocalMicroscopyTiledPyramidalImageStorage         1.2.840.10008.5.1.4.1.1.77.1.9
 RETIRED_VLMultiframeImageStorage                     1.2.840.10008.5.1.4.1.1.77.2
 LensometryMeasurementsStorage                        1.2.840.10008.5.1.4.1.1.78.1
 AutorefractionMeasurementsStorage                    1.2.840.10008.5.1.4.1.1.78.2
@@ -860,6 +985,7 @@ PatientRadiationDoseSRStorage                        1.2.840.10008.5.1.4.1.1.88.
 PlannedImagingAgentAdministrationSRStorage           1.2.840.10008.5.1.4.1.1.88.74
 PerformedImagingAgentAdministrationSRStorage         1.2.840.10008.5.1.4.1.1.88.75
 EnhancedXRayRadiationDoseSRStorage                   1.2.840.10008.5.1.4.1.1.88.76
+WaveformAnnotationSRStorage                          1.2.840.10008.5.1.4.1.1.88.77
 ContentAssessmentResultsStorage                      1.2.840.10008.5.1.4.1.1.90.1
 MicroscopyBulkSimpleAnnotationsStorage               1.2.840.10008.5.1.4.1.1.91.1
 EncapsulatedPDFStorage                               1.2.840.10008.5.1.4.1.1.104.1

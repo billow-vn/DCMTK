@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2023, OFFIS e.V.
+ *  Copyright (C) 2000-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -39,6 +39,7 @@ END_EXTERN_C
 #include "dcmtk/dcmpstat/dvpsprt.h"
 #include "dcmtk/dcmpstat/dvpshlp.h"
 #include "dcmtk/oflog/fileap.h"
+#include "dcmtk/ofstd/ofstd.h"
 
 #ifdef WITH_OPENSSL
 #include "dcmtk/dcmtls/tlstrans.h"
@@ -66,26 +67,11 @@ static void cleanChildren()
 {
 #ifdef HAVE_WAITPID
     int stat_loc;
-#elif defined(HAVE_WAIT3)
-    struct rusage rusage;
-#if defined(__NeXT__)
-    /* some systems need a union wait as argument to wait3 */
-    union wait status;
-#else
-    int        status;
-#endif
-#endif
-
-#if defined(HAVE_WAITPID) || defined(HAVE_WAIT3)
     int child = 1;
     int options = WNOHANG;
     while (child > 0)
     {
-#ifdef HAVE_WAITPID
         child = (int)(waitpid(-1, &stat_loc, options));
-#elif defined(HAVE_WAIT3)
-        child = wait3(&status, options, &rusage);
-#endif
         if (child < 0)
         {
             if (errno != ECHILD)
@@ -463,7 +449,7 @@ int main(int argc, char *argv[])
       {
         aString = logfileprefix;
         aString += "_";
-        sprintf(logcounterbuf, "%04ld", ++logcounter);
+        OFStandard::snprintf(logcounterbuf, sizeof(logcounterbuf), "%04ld", ++logcounter);
         aString += logcounterbuf;
         aString += ".dcm";
         printSCP.setDimseLogPath(aString.c_str());

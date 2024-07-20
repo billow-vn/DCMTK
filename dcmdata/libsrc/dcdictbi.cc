@@ -4,7 +4,7 @@
 **
 **   User: joergr
 **   Host: thinkpad2
-**   Date: 2023-07-14 12:18:43
+**   Date: 2024-07-04 10:04:28
 **   Prog: /home/joergr/Source/dcmtk-full/public/dcmdata/libsrc/mkdictbi
 **
 **   From: ../data/dicom.dic
@@ -486,6 +486,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x0008, 0x001b, 0x0008, 0x001b,
       EVR_UI, "OriginalSpecializedSOPClassUID", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0008, 0x001c, 0x0008, 0x001c,
+      EVR_CS, "SyntheticData", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0008, 0x0020, 0x0008, 0x0020,
@@ -1108,6 +1112,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_SQ, "ReferencedPerformedProcedureStepSequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0008, 0x1112, 0x0008, 0x1112,
+      EVR_SQ, "ReferencedInstancesBySOPClassSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x0008, 0x1115, 0x0008, 0x1115,
       EVR_SQ, "ReferencedSeriesSequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -1214,6 +1222,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x0008, 0x119a, 0x0008, 0x119a,
       EVR_SQ, "OtherFailuresSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0008, 0x119b, 0x0008, 0x119b,
+      EVR_SQ, "FailedStudySequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0008, 0x1200, 0x0008, 0x1200,
@@ -2490,6 +2502,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_SH, "EthnicGroup", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0010, 0x2161, 0x0010, 0x2161,
+      EVR_SQ, "EthnicGroupCodeSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x0010, 0x2180, 0x0010, 0x2180,
       EVR_SH, "Occupation", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -3000,6 +3016,14 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_LO, "ClinicalTrialProtocolName", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0012, 0x0022, 0x0012, 0x0022,
+      EVR_LO, "IssuerOfClinicalTrialProtocolID", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0012, 0x0023, 0x0012, 0x0023,
+      EVR_SQ, "OtherClinicalTrialProtocolIDsSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x0012, 0x0030, 0x0012, 0x0030,
       EVR_LO, "ClinicalTrialSiteID", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -3008,12 +3032,24 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_LO, "ClinicalTrialSiteName", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0012, 0x0032, 0x0012, 0x0032,
+      EVR_LO, "IssuerOfClinicalTrialSiteID", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x0012, 0x0040, 0x0012, 0x0040,
       EVR_LO, "ClinicalTrialSubjectID", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0012, 0x0041, 0x0012, 0x0041,
+      EVR_LO, "IssuerOfClinicalTrialSubjectID", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x0012, 0x0042, 0x0012, 0x0042,
       EVR_LO, "ClinicalTrialSubjectReadingID", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0012, 0x0043, 0x0012, 0x0043,
+      EVR_LO, "IssuerOfClinicalTrialSubjectReadingID", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0012, 0x0050, 0x0012, 0x0050,
@@ -3034,6 +3070,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x0012, 0x0054, 0x0012, 0x0054,
       EVR_SQ, "ClinicalTrialTimePointTypeCodeSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0012, 0x0055, 0x0012, 0x0055,
+      EVR_LO, "IssuerOfClinicalTrialTimePointID", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0012, 0x0060, 0x0012, 0x0060,
@@ -3058,6 +3098,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x0012, 0x0072, 0x0012, 0x0072,
       EVR_LO, "ClinicalTrialSeriesDescription", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0012, 0x0073, 0x0012, 0x0073,
+      EVR_LO, "IssuerOfClinicalTrialSeriesID", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0012, 0x0081, 0x0012, 0x0081,
@@ -14002,6 +14046,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_FL, "DegreeOfDilation", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0022, 0x000f, 0x0022, 0x000f,
+      EVR_FD, "VertexDistance", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x0022, 0x0010, 0x0022, 0x0010,
       EVR_FL, "StereoBaselineAngle", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -18745,7 +18793,7 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       "GEMS_DRS_1" }
 #endif
   , { 0x0038, 0x0004, 0x0038, 0x0004,
-      EVR_SQ, "ReferencedPatientAliasSequence", 1, 1, "DICOM",
+      EVR_SQ, "RETIRED_ReferencedPatientAliasSequence", 1, 1, "DICOM/retired",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0038, 0x0008, 0x0038, 0x0008,
@@ -22038,6 +22086,22 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_DS, "ObjectiveLensNumericalAperture", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x0048, 0x0114, 0x0048, 0x0114,
+      EVR_CS, "ConfocalMode", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0048, 0x0115, 0x0048, 0x0115,
+      EVR_CS, "TissueLocation", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0048, 0x0116, 0x0048, 0x0116,
+      EVR_SQ, "ConfocalMicroscopyImageFrameTypeSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x0048, 0x0117, 0x0048, 0x0117,
+      EVR_FD, "ImageAcquisitionDepth", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x0048, 0x0120, 0x0048, 0x0120,
       EVR_SQ, "PaletteColorLookupTableSequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -24019,11 +24083,11 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0070, 0x1807, 0x0070, 0x1807,
-      EVR_US, "WeightingLookupTableDescriptor", 3, 3, "DICOM",
+      EVR_US, "RETIRED_WeightingLookupTableDescriptor", 3, 3, "DICOM/retired",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0070, 0x1808, 0x0070, 0x1808,
-      EVR_OB, "WeightingLookupTableData", 1, 1, "DICOM",
+      EVR_OB, "RETIRED_WeightingLookupTableData", 1, 1, "DICOM/retired",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x0070, 0x1901, 0x0070, 0x1901,
@@ -27024,6 +27088,14 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_DS, "ROIVolume", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x3006, 0x002d, 0x3006, 0x002d,
+      EVR_DT, "ROIDateTime", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x3006, 0x002e, 0x3006, 0x002e,
+      EVR_DT, "ROIObservationDateTime", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x3006, 0x0030, 0x3006, 0x0030,
       EVR_SQ, "RTRelatedROISequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -27078,6 +27150,26 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x3006, 0x004a, 0x3006, 0x004a,
       EVR_SQ, "SourcePixelPlanesCharacteristicsSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x3006, 0x004b, 0x3006, 0x004b,
+      EVR_SQ, "SourceSeriesSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x3006, 0x004c, 0x3006, 0x004c,
+      EVR_SQ, "SourceSeriesInformationSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x3006, 0x004d, 0x3006, 0x004d,
+      EVR_SQ, "ROICreatorSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x3006, 0x004e, 0x3006, 0x004e,
+      EVR_SQ, "ROIInterpreterSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x3006, 0x004f, 0x3006, 0x004f,
+      EVR_SQ, "ROIObservationContextCodeSequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x3006, 0x0050, 0x3006, 0x0050,
@@ -27758,6 +27850,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x300a, 0x0053, 0x300a, 0x0053,
       EVR_DS, "TableTopLateralPositionTolerance", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x300a, 0x0054, 0x300a, 0x0054,
+      EVR_UI, "TableTopPositionAlignmentUID", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x300a, 0x0055, 0x300a, 0x0055,
@@ -29744,6 +29840,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_SQ, "ReferencedRTPrescriptionSequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x300a, 0x068b, 0x300a, 0x068b,
+      EVR_CS, "DoseValueInterpretation", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x300a, 0x0700, 0x300a, 0x0700,
       EVR_UI, "TreatmentSessionUID", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -30016,6 +30116,18 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       EVR_CS, "RTRadiationSetDeliveryUsage", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
+  , { 0x300a, 0x079f, 0x300a, 0x079f,
+      EVR_SQ, "PatientTreatmentPreparationSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x300a, 0x07a0, 0x300a, 0x07a0,
+      EVR_SQ, "PatientToEquipmentRelationshipSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x300a, 0x07a1, 0x300a, 0x07a1,
+      EVR_SQ, "ImagingEquipmentToTreatmentDeliveryDeviceRelationshipSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
   , { 0x300c, 0x0002, 0x300c, 0x0002,
       EVR_SQ, "ReferencedRTPlanSequence", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
@@ -30210,6 +30322,10 @@ static const DBI_SimpleEntry simpleBuiltinDict[] = {
       NULL }
   , { 0x300c, 0x0128, 0x300c, 0x0128,
       EVR_SQ, "BeamHoldOriginatingDeviceSequence", 1, 1, "DICOM",
+      DcmDictRange_Unspecified, DcmDictRange_Unspecified,
+      NULL }
+  , { 0x300c, 0x0129, 0x300c, 0x0129,
+      EVR_CS, "BeamHoldTransitionTriggerSource", 1, 1, "DICOM",
       DcmDictRange_Unspecified, DcmDictRange_Unspecified,
       NULL }
   , { 0x300e, 0x0002, 0x300e, 0x0002,

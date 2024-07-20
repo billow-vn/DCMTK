@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 1994-2022, OFFIS e.V.
+ *  Copyright (C) 1994-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -35,6 +35,7 @@
 #include "dcmtk/dcmdata/dcuid.h"      /* for dcmtk version name */
 #include "dcmtk/dcmdata/dcdicent.h"
 #include "dcmtk/dcmdata/dcostrmz.h"   /* for dcmZlibCompressionLevel */
+#include "dcmtk/ofstd/ofstd.h"
 
 #ifdef WITH_ZLIB
 #include <zlib.h>     /* for zlibVersion() */
@@ -176,18 +177,18 @@ addOverrideKey(OFConsoleApplication& app, const char *s)
     }
     DcmTag tag(OFstatic_cast(Uint16, g), OFstatic_cast(Uint16, e));
     if (tag.error() != EC_Normal) {
-        sprintf(msg2, "unknown tag: (%04x,%04x)", g, e);
+        OFStandard::snprintf(msg2, sizeof(msg2), "unknown tag: (%04x,%04x)", g, e);
         app.printError(msg2);
     }
     DcmElement *elem = DcmItem::newDicomElement(tag);
     if (elem == NULL) {
-        sprintf(msg2, "cannot create element for tag: (%04x,%04x)", g, e);
+        OFStandard::snprintf(msg2, sizeof(msg2), "cannot create element for tag: (%04x,%04x)", g, e);
         app.printError(msg2);
     }
     if (!valStr.empty()) {
         if (elem->putString(valStr.c_str()).bad())
         {
-            sprintf(msg2, "cannot put tag value: (%04x,%04x)=\"", g, e);
+            OFStandard::snprintf(msg2, sizeof(msg2), "cannot put tag value: (%04x,%04x)=\"", g, e);
             msg = msg2;
             msg += valStr;
             msg += "\"";
@@ -197,7 +198,7 @@ addOverrideKey(OFConsoleApplication& app, const char *s)
 
     if (overrideKeys == NULL) overrideKeys = new DcmDataset;
     if (overrideKeys->insert(elem, OFTrue).bad()) {
-        sprintf(msg2, "cannot insert tag: (%04x,%04x)", g, e);
+        OFStandard::snprintf(msg2, sizeof(msg2), "cannot insert tag: (%04x,%04x)", g, e);
         app.printError(msg2);
     }
 }
@@ -316,14 +317,14 @@ main(int argc, char *argv[])
       cmd.addOption("--dimse-timeout",       "-td",  1, "[s]econds: integer (default: unlimited)", "timeout for DIMSE messages");
 
       OFString opt3 = "set max receive pdu to n bytes (default: ";
-      sprintf(tempstr, "%ld", OFstatic_cast(long, ASC_DEFAULTMAXPDU));
+      OFStandard::snprintf(tempstr, sizeof(tempstr), "%ld", OFstatic_cast(long, ASC_DEFAULTMAXPDU));
       opt3 += tempstr;
       opt3 += ")";
       OFString opt4 = "[n]umber of bytes: integer (";
-      sprintf(tempstr, "%ld", OFstatic_cast(long, ASC_MINIMUMPDUSIZE));
+      OFStandard::snprintf(tempstr, sizeof(tempstr), "%ld", OFstatic_cast(long, ASC_MINIMUMPDUSIZE));
       opt4 += tempstr;
       opt4 += "..";
-      sprintf(tempstr, "%ld", OFstatic_cast(long, ASC_MAXIMUMPDUSIZE));
+      OFStandard::snprintf(tempstr, sizeof(tempstr), "%ld", OFstatic_cast(long, ASC_MAXIMUMPDUSIZE));
       opt4 += tempstr;
       opt4 += ")";
       cmd.addOption("--max-pdu",             "-pdu", 1, opt4.c_str(), opt3.c_str());
@@ -786,7 +787,7 @@ main(int argc, char *argv[])
     }
     ASC_setAPTitles(params, opt_ourTitle, opt_peerTitle, NULL);
 
-    sprintf(peerHost, "%s:%d", opt_peer, OFstatic_cast(int, opt_port));
+    OFStandard::snprintf(peerHost, sizeof(peerHost), "%s:%d", opt_peer, OFstatic_cast(int, opt_port));
     ASC_setPresentationAddresses(params, OFStandard::getHostName().c_str(), peerHost);
 
     /*
@@ -993,9 +994,10 @@ acceptSubAssoc(T_ASC_Network *aNet, T_ASC_Association **assoc)
     const char *knownAbstractSyntaxes[] = {
         UID_VerificationSOPClass
     };
-    const char* transferSyntaxes[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  // 10
-                                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  // 20
-                                       NULL };                                                      // +1
+    const char* transferSyntaxes[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,   // 10
+                                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,   // 20
+                                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,   // 30
+                                       NULL, NULL };                                                 // +2
     int numTransferSyntaxes;
     OFString temp_str;
 
@@ -1187,25 +1189,36 @@ acceptSubAssoc(T_ASC_Network *aNet, T_ASC_Association **assoc)
             transferSyntaxes[6] = UID_JPEGLSLosslessTransferSyntax;
             transferSyntaxes[7] = UID_RLELosslessTransferSyntax;
             transferSyntaxes[8] = UID_MPEG2MainProfileAtMainLevelTransferSyntax;
-            transferSyntaxes[9] = UID_MPEG2MainProfileAtHighLevelTransferSyntax;
-            transferSyntaxes[10] = UID_MPEG4HighProfileLevel4_1TransferSyntax;
-            transferSyntaxes[11] = UID_MPEG4BDcompatibleHighProfileLevel4_1TransferSyntax;
-            transferSyntaxes[12] = UID_MPEG4HighProfileLevel4_2_For2DVideoTransferSyntax;
-            transferSyntaxes[13] = UID_MPEG4HighProfileLevel4_2_For3DVideoTransferSyntax;
-            transferSyntaxes[14] = UID_MPEG4StereoHighProfileLevel4_2TransferSyntax;
-            transferSyntaxes[15] = UID_HEVCMainProfileLevel5_1TransferSyntax;
-            transferSyntaxes[16] = UID_HEVCMain10ProfileLevel5_1TransferSyntax;
-            transferSyntaxes[17] = UID_DeflatedExplicitVRLittleEndianTransferSyntax;
+            transferSyntaxes[9] = UID_FragmentableMPEG2MainProfileMainLevelTransferSyntax;
+            transferSyntaxes[10] = UID_MPEG2MainProfileAtHighLevelTransferSyntax;
+            transferSyntaxes[11] = UID_FragmentableMPEG2MainProfileHighLevelTransferSyntax;
+            transferSyntaxes[12] = UID_MPEG4HighProfileLevel4_1TransferSyntax;
+            transferSyntaxes[13] = UID_FragmentableMPEG4HighProfileLevel4_1TransferSyntax;
+            transferSyntaxes[14] = UID_MPEG4BDcompatibleHighProfileLevel4_1TransferSyntax;
+            transferSyntaxes[15] = UID_FragmentableMPEG4BDcompatibleHighProfileLevel4_1TransferSyntax;
+            transferSyntaxes[16] = UID_MPEG4HighProfileLevel4_2_For2DVideoTransferSyntax;
+            transferSyntaxes[17] = UID_FragmentableMPEG4HighProfileLevel4_2_For2DVideoTransferSyntax;
+            transferSyntaxes[18] = UID_MPEG4HighProfileLevel4_2_For3DVideoTransferSyntax;
+            transferSyntaxes[19] = UID_FragmentableMPEG4HighProfileLevel4_2_For3DVideoTransferSyntax;
+            transferSyntaxes[20] = UID_MPEG4StereoHighProfileLevel4_2TransferSyntax;
+            transferSyntaxes[21] = UID_FragmentableMPEG4StereoHighProfileLevel4_2TransferSyntax;
+            transferSyntaxes[22] = UID_HEVCMainProfileLevel5_1TransferSyntax;
+            transferSyntaxes[23] = UID_HEVCMain10ProfileLevel5_1TransferSyntax;
+            transferSyntaxes[24] = UID_HighThroughputJPEG2000ImageCompressionLosslessOnlyTransferSyntax;
+            transferSyntaxes[25] = UID_HighThroughputJPEG2000RPCLImageCompressionLosslessOnlyTransferSyntax;
+            transferSyntaxes[26] = UID_HighThroughputJPEG2000ImageCompressionTransferSyntax;
+            transferSyntaxes[27] = UID_DeflatedExplicitVRLittleEndianTransferSyntax;
+            transferSyntaxes[28] = UID_EncapsulatedUncompressedExplicitVRLittleEndianTransferSyntax;
             if (gLocalByteOrder == EBO_LittleEndian)
             {
-              transferSyntaxes[18] = UID_LittleEndianExplicitTransferSyntax;
-              transferSyntaxes[19] = UID_BigEndianExplicitTransferSyntax;
+              transferSyntaxes[29] = UID_LittleEndianExplicitTransferSyntax;
+              transferSyntaxes[30] = UID_BigEndianExplicitTransferSyntax;
             } else {
-              transferSyntaxes[18] = UID_BigEndianExplicitTransferSyntax;
-              transferSyntaxes[19] = UID_LittleEndianExplicitTransferSyntax;
+              transferSyntaxes[29] = UID_BigEndianExplicitTransferSyntax;
+              transferSyntaxes[30] = UID_LittleEndianExplicitTransferSyntax;
             }
-            transferSyntaxes[20] = UID_LittleEndianImplicitTransferSyntax;
-            numTransferSyntaxes = 21;
+            transferSyntaxes[31] = UID_LittleEndianImplicitTransferSyntax;
+            numTransferSyntaxes = 32;
           } else {
             /* We prefer explicit transfer syntaxes.
              * If we are running on a Little Endian machine we prefer
@@ -1422,7 +1435,7 @@ static OFCondition storeSCP(
         OFStandard::strlcpy(imageFileName, NULL_DEVICE_NAME, 2048);
 #endif
     } else {
-        sprintf(imageFileName, "%s.%s",
+        OFStandard::snprintf(imageFileName, sizeof(imageFileName), "%s.%s",
             dcmSOPClassUIDToModality(req->AffectedSOPClassUID),
             req->AffectedSOPInstanceUID);
         OFStandard::sanitizeFilename(imageFileName);

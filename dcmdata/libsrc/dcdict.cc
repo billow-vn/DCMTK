@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 1994-2023, OFFIS e.V.
+ *  Copyright (C) 1994-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -575,15 +575,6 @@ DcmDataDictionary::loadDictionary(const char* fileName, OFBool errorIfAbsent)
     }
 }
 
-#ifndef HAVE_GETENV
-
-static
-char* getenv() {
-    return NULL;
-}
-
-#endif /* !HAVE_GETENV */
-
 
 
 OFBool
@@ -670,7 +661,7 @@ DcmDataDictionary::addEntry(DcmDictEntry* e)
 {
     if (e->isRepeating()) {
         /*
-         * Find the best position in repeating tag list
+         * Find the best position in repeating groups data dictionary.
          * Existing entries are replaced if the ranges and repetition
          * constraints are the same.
          * If a range represents a subset of an existing range then it
@@ -747,14 +738,13 @@ DcmDataDictionary::findEntry(const DcmDictEntry& entry) const
 const DcmDictEntry*
 DcmDataDictionary::findEntry(const DcmTagKey& key, const char *privCreator) const
 {
-    /* search first in the normal tags dictionary and if not found
-     * then search in the repeating tags list.
+    /* first, search in the normal tags data dictionary (including private tags)
      */
     const DcmDictEntry* e = NULL;
-
     e = hashDict.get(key, privCreator);
+
     if (e == NULL) {
-        /* search in the repeating tags dictionary */
+        /* then, search in the repeating groups data dictionary */
         OFBool found = OFFalse;
         DcmDictEntryListConstIterator iter(repDict.begin());
         DcmDictEntryListConstIterator last(repDict.end());
@@ -774,8 +764,7 @@ DcmDataDictionary::findEntry(const char *name) const
     const DcmDictEntry* e = NULL;
     const DcmDictEntry* ePrivate = NULL;
 
-    /* search first in the normal tags dictionary and if not found
-     * then search in the repeating tags list.
+    /* first, search in the normal tags data dictionary
      */
     DcmHashDictIterator iter;
     for (iter = hashDict.begin(); (e == NULL) && (iter != hashDict.end()); ++iter) {
@@ -790,8 +779,9 @@ DcmDataDictionary::findEntry(const char *name) const
         }
     }
 
-    if (e == NULL) {
-        /* search in the repeating tags dictionary */
+    /* if not found ... */
+     if (e == NULL) {
+        /* search in the repeating groups data dictionary */
         OFBool found = OFFalse;
         DcmDictEntryListConstIterator iter2(repDict.begin());
         DcmDictEntryListConstIterator last(repDict.end());

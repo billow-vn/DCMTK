@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2023, OFFIS e.V.
+ *  Copyright (C) 2000-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -28,6 +28,7 @@
 #include "dcmtk/dcmdata/dctk.h"        /* for class DcmDataset */
 #include "dcmtk/dcmnet/dul.h"
 #include "dcmtk/dcmpstat/dcmpstat.h"   /* for DcmPresentationState */
+#include "dcmtk/ofstd/ofstd.h"
 
 #ifdef WITH_ZLIB
 #include <zlib.h>                      /* for zlibVersion() */
@@ -122,7 +123,7 @@ static void printResult(
         if (dobj != NULL && dobj->getTag() != DCM_Item)
         {
             char buf[128];
-            sprintf(buf, "(%04x,%04x).",
+            OFStandard::snprintf(buf, sizeof(buf), "(%04x,%04x).",
                     (unsigned)dobj->getGTag(),
                     (unsigned)dobj->getETag());
             tmp += buf;
@@ -167,13 +168,13 @@ static const char* streamvm(const DcmDictEntry *e)
 {
     static char buf[256];
     if (e->isFixedSingleVM()) {
-        sprintf(buf, "%d", e->getVMMax());
+        OFStandard::snprintf(buf, sizeof(buf), "%d", e->getVMMax());
     } else if (e->isVariableRangeVM()) {
-        sprintf(buf, "%d-n", e->getVMMin());
+        OFStandard::snprintf(buf, sizeof(buf), "%d-n", e->getVMMin());
     } else if (e->isFixedRangeVM()){
-        sprintf(buf, "%d-%d", e->getVMMin(), e->getVMMax());
+        OFStandard::snprintf(buf, sizeof(buf), "%d-%d", e->getVMMin(), e->getVMMax());
     } else {
-        sprintf(buf, "?(%d-%d)?", e->getVMMin(), e->getVMMax());
+        OFStandard::snprintf(buf, sizeof(buf), "?(%d-%d)?", e->getVMMin(), e->getVMMax());
     }
     return buf;
 }
@@ -186,15 +187,15 @@ static const char* streamLengthOfValue(DcmVR& vr)
     Uint32 undefLen = DCM_UndefinedLength;
 
     if (min==max) {
-        sprintf(buf, "%d bytes fixed length", (int)min);
+        OFStandard::snprintf(buf, sizeof(buf), "%d bytes fixed length", (int)min);
     } else if (min==0) {
         if (max==undefLen) {
-            sprintf(buf, "unrestricted length");
+            OFStandard::snprintf(buf, sizeof(buf), "unrestricted length");
         } else {
-            sprintf(buf, "%d bytes maximum", (int)max);
+            OFStandard::snprintf(buf, sizeof(buf), "%d bytes maximum", (int)max);
         }
     } else {
-        sprintf(buf, "range %d-%d bytes length", (int)min, (int)max);
+        OFStandard::snprintf(buf, sizeof(buf), "range %d-%d bytes length", (int)min, (int)max);
     }
     return buf;
 }
@@ -652,7 +653,11 @@ static OFString printAttribute(
     OFOStringStream str;
 
     ec = dset->search(key, stack, ESM_fromHere, OFFalse);
-    elem = (DcmElement*) stack.top();
+    if (ec.good() && stack.top()->isElement())
+    {
+        elem = (DcmElement*) stack.top();
+    }
+
     if (elem)
         elem->print(str, DCMTypes::PF_shortenLongTagValues);
     else

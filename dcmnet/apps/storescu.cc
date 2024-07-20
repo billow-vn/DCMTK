@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 1996-2023, OFFIS e.V.
+ *  Copyright (C) 1996-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -723,7 +723,7 @@ int main(int argc, char *argv[])
 
     /* Figure out the presentation addresses and copy the */
     /* corresponding values into the association parameters.*/
-    sprintf(peerHost, "%s:%d", opt_peer, OFstatic_cast(int, opt_port));
+    OFStandard::snprintf(peerHost, sizeof(peerHost), "%s:%d", opt_peer, OFstatic_cast(int, opt_port));
     ASC_setPresentationAddresses(params, OFStandard::getHostName().c_str(), peerHost);
 
     /* Configure User Identity Negotiation*/
@@ -1111,7 +1111,7 @@ static OFString
 intToString(int i)
 {
   char numbuf[32];
-  sprintf(numbuf, "%d", i);
+  OFStandard::snprintf(numbuf, sizeof(numbuf), "%d", i);
   return numbuf;
 }
 
@@ -1135,6 +1135,12 @@ updateStringAttributeValue(DcmItem *dataset, const DcmTagKey &key, OFString &val
   if (cond != EC_Normal) {
     OFLOG_ERROR(storescuLogger, "updateStringAttributeValue: cannot find: " << tag.getTagName()
          << " " << key << ": " << cond.text());
+    return OFFalse;
+  }
+
+  if (! stack.top()->isElement())
+  {
+    OFLOG_ERROR(storescuLogger, "updateStringAttributeValue: not a DcmElement: " << tag.getTagName() << " " << key);
     return OFFalse;
   }
 
@@ -1327,11 +1333,11 @@ storeSCU(T_ASC_Association *assoc, const char *fname)
   /* figure out which of the accepted presentation contexts should be used */
   DcmXfer filexfer(dcmff.getDataset()->getOriginalXfer());
 
-  /* special case: if the file uses an unencapsulated transfer syntax (uncompressed
-   * or deflated explicit VR) and we prefer deflated explicit VR, then try
-   * to find a presentation context for deflated explicit VR first.
+  /* special case: if the file uses a transfer syntax with native format
+   * (uncompressed or deflated explicit VR) and we prefer deflated explicit VR,
+   * then try to find a presentation context for deflated explicit VR first.
    */
-  if (filexfer.isNotEncapsulated() &&
+  if (filexfer.usesNativeFormat() &&
     opt_networkTransferSyntax == EXS_DeflatedLittleEndianExplicit)
   {
     filexfer = EXS_DeflatedLittleEndianExplicit;

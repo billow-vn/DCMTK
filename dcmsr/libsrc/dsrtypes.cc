@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2000-2023, OFFIS e.V.
+ *  Copyright (C) 2000-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were developed by
@@ -342,7 +342,8 @@ static const S_DocumentTypeNameMap DocumentTypeNameMap[] =
     {DSRTypes::DT_PatientRadiationDoseSR,                UID_PatientRadiationDoseSRStorage,                   EM_EnhancedEquipment,                                             "SR", "Patient Radiation Dose SR"},
     {DSRTypes::DT_PerformedImagingAgentAdministrationSR, UID_PerformedImagingAgentAdministrationSRStorage,    EM_EnhancedEquipment | EM_Synchronization,                        "SR", "Performed Imaging Agent Administration SR"},
     {DSRTypes::DT_PlannedImagingAgentAdministrationSR,   UID_PlannedImagingAgentAdministrationSRStorage,      EM_EnhancedEquipment,                                             "SR", "Planned Imaging Agent Administration SR"},
-    {DSRTypes::DT_RenditionSelectionDocument,            UID_RenditionSelectionDocumentRealTimeCommunication, EM_EnhancedEquipment | EM_Synchronization | EM_KeyObjectDocument, "KO", "Rendition Selection Document"}
+    {DSRTypes::DT_RenditionSelectionDocument,            UID_RenditionSelectionDocumentRealTimeCommunication, EM_EnhancedEquipment | EM_Synchronization | EM_KeyObjectDocument, "KO", "Rendition Selection Document"},
+    {DSRTypes::DT_WaveformAnnotationSR,                  UID_WaveformAnnotationSRStorage,                     EM_EnhancedEquipment,                                             "SR", "Waveform Annotation SR"}
 };
 
 
@@ -954,7 +955,8 @@ DSRTypes::E_CharacterSet DSRTypes::definedTermToCharacterSet(const OFString &def
 
 OFBool DSRTypes::isDocumentTypeSupported(const E_DocumentType documentType)
 {
-    return (documentType != DT_invalid) && (documentType != DT_ExtensibleSR) && (documentType != DT_EnhancedXRayRadiationDoseSR);
+    return (documentType != DT_invalid) && (documentType != DT_ExtensibleSR) &&
+        (documentType != DT_EnhancedXRayRadiationDoseSR) && (documentType != DT_WaveformAnnotationSR);
 }
 
 
@@ -1180,11 +1182,15 @@ OFCondition DSRTypes::getAndCheckElementFromDataset(DcmItem &dataset,
     OFCondition result = dataset.search(tagKey, stack, ESM_fromHere, OFFalse /*searchIntoSub*/);
     if (result.good())
     {
-        /* copy object from search stack */
-        result = delem.copyFrom(*stack.top());
-        /* we need a reference to the original element in order to determine the SpecificCharacterSet */
-        if (!checkElementValue(OFstatic_cast(DcmElement *, stack.top()), tagKey, vm, type, result, moduleName, acceptViolation))
-            result = SR_EC_InvalidValue;
+        if (stack.top()->isElement())
+        {
+            /* copy object from search stack */
+            result = delem.copyFrom(*stack.top());
+            /* we need a reference to the original element in order to determine the SpecificCharacterSet */
+            if (!checkElementValue(OFstatic_cast(DcmElement *, stack.top()), tagKey, vm, type, result, moduleName, acceptViolation))
+                result = SR_EC_InvalidValue;
+        } else
+            result = EC_CorruptedData;
     }
     /* the element could not be found in the dataset */
     else if (!checkElementValue(delem, vm, type, result, moduleName, acceptViolation))
@@ -1205,11 +1211,15 @@ OFCondition DSRTypes::getAndCheckStringValueFromDataset(DcmItem &dataset,
     OFCondition result = dataset.search(tagKey, stack, ESM_fromHere, OFFalse /*searchIntoSub*/);
     if (result.good())
     {
-        DcmElement *delem = OFstatic_cast(DcmElement *, stack.top());
-        /* we need a reference to the original element in order to determine the SpecificCharacterSet */
-        if (!checkElementValue(delem, tagKey, vm, type, result, moduleName, acceptViolation))
-            result = SR_EC_InvalidValue;
-        delem->getOFString(stringValue, 0);
+        if (stack.top()->isElement())
+        {
+            DcmElement *delem = OFstatic_cast(DcmElement *, stack.top());
+            /* we need a reference to the original element in order to determine the SpecificCharacterSet */
+            if (!checkElementValue(delem, tagKey, vm, type, result, moduleName, acceptViolation))
+                result = SR_EC_InvalidValue;
+            delem->getOFString(stringValue, 0);
+        } else
+            result = EC_CorruptedData;
     } else {
         if ((type == "1") || (type == "2"))
         {
@@ -1367,12 +1377,13 @@ const OFString &DSRTypes::dicomToXMLPersonName(const OFString &dicomPersonName,
 
 
 const char *DSRTypes::numberToString(const size_t number,
-                                     char *stringValue)
+                                     char *stringValue,
+                                     size_t stringLength)
 {
     if (stringValue != NULL)
     {
         /* unsigned long */
-        sprintf(stringValue, "%lu", OFstatic_cast(unsigned long, number));
+        OFStandard::snprintf(stringValue, stringLength, "%lu", OFstatic_cast(unsigned long, number));
     }
     return stringValue;
 }
@@ -1554,6 +1565,7 @@ DSRIODConstraintChecker *DSRTypes::createIODConstraintChecker(const E_DocumentTy
             checker = new DSRRenditionSelectionDocumentConstraintChecker();
             break;
         case DT_EnhancedXRayRadiationDoseSR:
+        case DT_WaveformAnnotationSR:
             /* not yet supported */
             break;
         case DT_invalid:

@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 1994-2022, OFFIS e.V.
+ *  Copyright (C) 1994-2024, OFFIS e.V.
  *  All rights reserved.  See COPYRIGHT file for details.
  *
  *  This software and supporting documentation were partly developed by
@@ -109,13 +109,13 @@ END_EXTERN_C
 #include "dulpriv.h"
 #include "dulfsm.h"
 #include "dcmtk/ofstd/ofbmanip.h"
-#include "dcmtk/ofstd/ofconsol.h"
 #include "dcmtk/dcmnet/assoc.h"    /* for ASC_MAXIMUMPDUSIZE */
 #include "dcmtk/dcmnet/dcmtrans.h"
 #include "dcmtk/dcmnet/dcmlayer.h"
 #include "dcmtk/dcmnet/diutil.h"
 #include "dcmtk/dcmnet/helpers.h"
 #include "dcmtk/ofstd/ofsockad.h" /* for class OFSockAddr */
+#include "dcmtk/ofstd/ofstd.h"
 #include <ctime>
 #include <climits>
 
@@ -132,6 +132,39 @@ enum
 #else
     DCMNET_EINTR = EINTR
 #endif
+};
+
+/** Small helper class that manages pointer and free()s it on destruction,
+ *  unless pointer is released using its release() method. The class can only
+ *  be used for memory allocated using malloc(), i.e. not new().
+ *  The class never allocates memory itself.
+ */
+struct BufferGuard
+{
+    /// Managed pointer to buffer
+    unsigned char *buffer;
+
+    /** Default constructor, initializes internal pointer with NULL
+     */
+    BufferGuard() : buffer(NULL) {}
+
+    /** Constructor, initializes internal pointer with given value
+     *  @param b pointer to buffer to be managed
+     */
+
+    BufferGuard(unsigned char *b) : buffer(b) {}
+
+    /** Destructor, releases internal managed buffer by calling free()
+     */
+
+    ~BufferGuard() { free(buffer); }
+
+    /** Release internal managed buffer, i.e. return pointer to caller
+     *  and set internal pointer to NULL. Caller is responsible for
+     *  freeing the memory.
+     *  @return pointer to managed buffer
+     */
+    unsigned char* release() { unsigned char *tmp = buffer; buffer = NULL; return tmp; }
 };
 
 static OFCondition
@@ -262,7 +295,7 @@ readPDUHead(PRIVATE_ASSOCIATIONKEY ** association,
             unsigned long *PDULength);
 static OFCondition
 readPDU(PRIVATE_ASSOCIATIONKEY ** association, DUL_BLOCKOPTIONS block,
-        int timeout, unsigned char **buffer,
+        int timeout, BufferGuard& buffer,
         unsigned char *pduType, unsigned char *pduReserved,
         unsigned long *pduLength);
 static OFCondition
@@ -696,19 +729,20 @@ DUL_InitializeFSM()
             for (idx2 = 0; idx2 < DIM_OF(FSM_FunctionTable) &&
                  stateEntries[l_index].actionFunction == NULL; idx2++)
                 if (stateEntries[l_index].action == FSM_FunctionTable[idx2].action) {
-                    stateEntries[l_index].actionFunction =
-                        FSM_FunctionTable[idx2].actionFunction;
-                    (void) sprintf(stateEntries[l_index].actionName, "%.*s",
-                                 (int)(sizeof(stateEntries[l_index].actionName) - 1),
-                                   FSM_FunctionTable[idx2].actionName);
+                    stateEntries[l_index].actionFunction = FSM_FunctionTable[idx2].actionFunction;
+                    OFStandard::snprintf(stateEntries[l_index].actionName, 
+                        sizeof(stateEntries[l_index].actionName), "%.*s",
+                        (int)(sizeof(stateEntries[l_index].actionName) - 1),
+                        FSM_FunctionTable[idx2].actionName);
                 }
         }
         for (idx2 = 0; idx2 < DIM_OF(Event_Table) &&
              strlen(stateEntries[l_index].eventName) == 0; idx2++) {
             if (stateEntries[l_index].event == Event_Table[idx2].event)
-                (void) sprintf(stateEntries[l_index].eventName, "%.*s",
-                               (int)(sizeof(stateEntries[l_index].eventName) - 1),
-                               Event_Table[idx2].eventName);
+                OFStandard::snprintf(stateEntries[l_index].eventName, 
+                    sizeof(stateEntries[l_index].eventName), "%.*s",
+                    (int)(sizeof(stateEntries[l_index].eventName) - 1),
+                    Event_Table[idx2].eventName);
         }
     }
 
@@ -749,7 +783,7 @@ PRV_StateMachine(PRIVATE_NETWORKKEY ** network,
     if (event < 0 || event >= DUL_NUMBER_OF_EVENTS)
     {
       char buf1[256];
-      sprintf(buf1, "DUL Finite State Machine Error: Bad event, state %d event %d", state, event);
+      OFStandard::snprintf(buf1, sizeof(buf1), "DUL Finite State Machine Error: Bad event, state %d event %d", state, event);
       return makeDcmnetCondition(DULC_FSMERROR, OF_error, buf1);
     }
 
@@ -757,7 +791,7 @@ PRV_StateMachine(PRIVATE_NETWORKKEY ** network,
     if (state < 1 || state > DUL_NUMBER_OF_STATES)
     {
       char buf1[256];
-      sprintf(buf1, "DUL Finite State Machine Error: Bad state, state %d event %d", state, event);
+      OFStandard::snprintf(buf1, sizeof(buf1), "DUL Finite State Machine Error: Bad state, state %d event %d", state, event);
       return makeDcmnetCondition(DULC_FSMERROR, OF_error, buf1);
     }
 
@@ -779,7 +813,7 @@ PRV_StateMachine(PRIVATE_NETWORKKEY ** network,
     else
     {
       char buf1[256];
-      sprintf(buf1, "DUL Finite State Machine Error: No action defined, state %d event %d", state, event);
+      OFStandard::snprintf(buf1, sizeof(buf1), "DUL Finite State Machine Error: No action defined, state %d event %d", state, event);
       return makeDcmnetCondition(DULC_FSMERROR, OF_error, buf1);
     }
 }
@@ -887,9 +921,9 @@ AE_3_AssociateConfirmationAccept(PRIVATE_NETWORKKEY ** /*network*/,
     DUL_ASSOCIATESERVICEPARAMETERS
     * service;
     unsigned char
-        * buffer = NULL,
         pduType,
         pduReserve;
+    BufferGuard buffer;
     unsigned long
         pduLength;
     PRV_ASSOCIATEPDU
@@ -905,17 +939,15 @@ AE_3_AssociateConfirmationAccept(PRIVATE_NETWORKKEY ** /*network*/,
         * scuscpRole;
 
     service = (DUL_ASSOCIATESERVICEPARAMETERS *) params;
-    OFCondition cond = readPDU(association, DUL_BLOCK, 0, &buffer, &pduType, &pduReserve, &pduLength);
-
+    OFCondition cond = readPDU(association, DUL_BLOCK, 0, buffer, &pduType, &pduReserve, &pduLength);
     if (cond.bad())
     {
-       if (buffer) free(buffer);
        return cond;
     }
 
     /* cond is good so we know that buffer exists */
 
-    DCMNET_DEBUG(dump_pdu("Associate Accept", buffer, pduLength + 6));
+    DCMNET_DEBUG(dump_pdu("Associate Accept", buffer.buffer, pduLength + 6));
 
     if (pduType == DUL_TYPEASSOCIATEAC)
     {
@@ -925,13 +957,12 @@ AE_3_AssociateConfirmationAccept(PRIVATE_NETWORKKEY ** /*network*/,
           (*association)->associatePDU = new char[pduLength+6];
           if ((*association)->associatePDU)
           {
-            memcpy((*association)->associatePDU, buffer, (size_t) pduLength+6);
+            memcpy((*association)->associatePDU, buffer.buffer, (size_t) pduLength+6);
             (*association)->associatePDULength = pduLength+6;
           }
         }
 
-        cond = parseAssociate(buffer, pduLength, &assoc);
-        free(buffer);
+        cond = parseAssociate(buffer.buffer, pduLength, &assoc);
         if (cond.bad()) return makeDcmnetSubCondition(DULC_ILLEGALPDU, OF_error, "DUL Illegal or ill-formed PDU", cond);
 
         OFStandard::strlcpy(service->respondingAPTitle, assoc.calledAPTitle, sizeof(service->respondingAPTitle));
@@ -976,7 +1007,7 @@ AE_3_AssociateConfirmationAccept(PRIVATE_NETWORKKEY ** /*network*/,
             if (prvCtx->transferSyntaxList == NULL)
             {
               char buf1[256];
-              sprintf(buf1, "DUL Peer supplied illegal number of transfer syntaxes (%d)", 0);
+              OFStandard::snprintf(buf1, sizeof(buf1), "DUL Peer supplied illegal number of transfer syntaxes (%d)", 0);
               free(userPresentationCtx);
               return makeDcmnetCondition(DULC_PEERILLEGALXFERSYNTAXCOUNT, OF_error, buf1);
             }
@@ -984,7 +1015,7 @@ AE_3_AssociateConfirmationAccept(PRIVATE_NETWORKKEY ** /*network*/,
             if ((prvCtx->result == DUL_PRESENTATION_ACCEPT) && (LST_Count(&prvCtx->transferSyntaxList) != 1))
             {
               char buf2[256];
-              sprintf(buf2, "DUL Peer supplied illegal number of transfer syntaxes (%ld)", LST_Count(&prvCtx->transferSyntaxList));
+              OFStandard::snprintf(buf2, sizeof(buf2), "DUL Peer supplied illegal number of transfer syntaxes (%ld)", LST_Count(&prvCtx->transferSyntaxList));
               free(userPresentationCtx);
               return makeDcmnetCondition(DULC_PEERILLEGALXFERSYNTAXCOUNT, OF_error, buf2);
             }
@@ -1150,9 +1181,9 @@ AE_6_ExamineAssociateRequest(PRIVATE_NETWORKKEY ** /*network*/,
     DUL_ASSOCIATESERVICEPARAMETERS
     * service;
     unsigned char
-        *buffer=NULL,
         pduType,
         pduReserve;
+    BufferGuard buffer;
     unsigned long
         pduLength;
     PRV_ASSOCIATEPDU
@@ -1160,12 +1191,11 @@ AE_6_ExamineAssociateRequest(PRIVATE_NETWORKKEY ** /*network*/,
 
     (*association)->timerStart = 0;
     service = (DUL_ASSOCIATESERVICEPARAMETERS *) params;
-    OFCondition cond = readPDU(association, DUL_BLOCK, 0, &buffer,
+    OFCondition cond = readPDU(association, DUL_BLOCK, 0, buffer,
                    &pduType, &pduReserve, &pduLength);
 
     if (cond.bad())
     {
-       if (buffer) free(buffer);
        return cond;
     }
 
@@ -1179,16 +1209,13 @@ AE_6_ExamineAssociateRequest(PRIVATE_NETWORKKEY ** /*network*/,
           (*association)->associatePDU = new char[pduLength+6];
           if ((*association)->associatePDU)
           {
-            memcpy((*association)->associatePDU, buffer, (size_t) pduLength+6);
+            memcpy((*association)->associatePDU, buffer.buffer, (size_t) pduLength+6);
             (*association)->associatePDULength = pduLength+6;
           }
         }
 
-        DCMNET_DEBUG(dump_pdu("Associate Request", buffer, pduLength + 6));
-        cond = parseAssociate(buffer, pduLength, &assoc);
-        free(buffer);
-        buffer = NULL;
-
+        DCMNET_DEBUG(dump_pdu("Associate Request", buffer.buffer, pduLength + 6));
+        cond = parseAssociate(buffer.buffer, pduLength, &assoc);
         if (cond.bad()) {
             if (cond == DUL_UNSUPPORTEDPEERPROTOCOL)    /* Make it look OK */
                 (*association)->protocolState = STATE3;
@@ -1421,7 +1448,7 @@ DT_2_IndicatePData(PRIVATE_NETWORKKEY ** /*network*/,
         if (pdvLength < 2 || ULONG_MAX - pdvLength < 4 || length < 4 + pdvLength)
         {
            char buf[256];
-           sprintf(buf, "PDV with invalid length %lu encountered. This probably indicates a malformed P DATA PDU.", pdvLength);
+           OFStandard::snprintf(buf, sizeof(buf), "PDV with invalid length %lu encountered. This probably indicates a malformed P DATA PDU.", pdvLength);
            return makeDcmnetCondition(DULC_ILLEGALPDULENGTH, OF_error, buf);
         }
 
@@ -1435,7 +1462,7 @@ DT_2_IndicatePData(PRIVATE_NETWORKKEY ** /*network*/,
     if (length != 0)
     {
        char buf[256];
-       sprintf(buf, "PDV lengths don't add up correctly: %d PDVs. This probably indicates a malformed P-DATA PDU. PDU type is %02x.", (int)pdvCount, (unsigned int) pduType);
+       OFStandard::snprintf(buf, sizeof(buf), "PDV lengths don't add up correctly: %d PDVs. This probably indicates a malformed P-DATA PDU. PDU type is %02x.", (int)pdvCount, (unsigned int) pduType);
        return makeDcmnetCondition(DULC_ILLEGALPDU, OF_error, buf);
     }
 
@@ -1455,7 +1482,7 @@ DT_2_IndicatePData(PRIVATE_NETWORKKEY ** /*network*/,
         /* Hence, return an error (see DICOM standard (year 2000) part 8, section 9.3.1, */
         /* figure 9-2) (or the corresponding section in a later version of the standard) */
        char buf[256];
-       sprintf(buf, "PDU without any PDVs encountered. In DT_2_IndicatePData.  This probably indicates a  malformed P DATA PDU." );
+       OFStandard::snprintf(buf, sizeof(buf), "PDU without any PDVs encountered. In DT_2_IndicatePData.  This probably indicates a  malformed P DATA PDU." );
        return makeDcmnetCondition(DULC_ILLEGALPDU, OF_error, buf);
     }
 
@@ -2232,7 +2259,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
     if (sscanf(params->calledPresentationAddress, "%[^:]:%d", node, &port) != 2)
     {
         char buf[1024];
-        sprintf(buf,"Illegal service parameter: %s", params->calledPresentationAddress);
+        OFStandard::snprintf(buf, sizeof(buf), "Illegal service parameter: %s", params->calledPresentationAddress);
         return makeDcmnetCondition(DULC_ILLEGALSERVICEPARAMETER, OF_error, buf);
     }
 
@@ -2256,7 +2283,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
         if (server.getFamily() == 0)
         {
           char buf2[4095]; // node could be a long string
-          sprintf(buf2, "Attempt to connect to unknown host: %s", node);
+          OFStandard::snprintf(buf2, sizeof(buf2), "Attempt to connect to unknown host: %s", node);
           return makeDcmnetCondition(DULC_UNKNOWNHOST, OF_error, buf2);
         }
     }
@@ -2371,17 +2398,7 @@ requestAssociationTCP(PRIVATE_NETWORKKEY ** network,
             // This could either mean success or an asynchronous error condition.
             // use getsockopt to check the socket status.
             int socketError = 0;
-
-#ifdef HAVE_DECLARATION_SOCKLEN_T
-            // some platforms (e.g. Solaris 7) declare socklen_t
             socklen_t socketErrorLen = sizeof(socketError);
-#elif defined(HAVE_INTP_GETSOCKOPT)
-            // some platforms (e.g. Solaris 2.5.1) prefer int
-            int socketErrorLen = (int) sizeof(socketError);
-#else
-            // some platforms (e.g. OSF1 4.0) prefer size_t
-            size_t socketErrorLen = sizeof(socketError);
-#endif
 
             // Solaris 2.5.1 expects a char * as argument 4 of getsockopt. Most other
             // platforms expect void *, so casting to a char * should be safe.
@@ -2551,9 +2568,7 @@ sendAssociationRQTCP(PRIVATE_NETWORKKEY ** /*network*/,
 {
     PRV_ASSOCIATEPDU
     associateRequest;
-    unsigned char
-        buffer[4096],
-       *b;
+    BufferGuard buffer;
     unsigned long
         length;
     int
@@ -2568,13 +2583,10 @@ sendAssociationRQTCP(PRIVATE_NETWORKKEY ** /*network*/,
         DCMNET_ERROR(cond.text());
         return cond;
     }
-    if (associateRequest.length + 6 <= sizeof(buffer))
-        b = buffer;
-    else {
-        b = (unsigned char*)malloc(size_t(associateRequest.length + 6));
-        if (b == NULL)  return EC_MemoryExhausted;
-    }
-    cond = streamAssociatePDU(&associateRequest, b,
+    buffer.buffer = (unsigned char*)malloc(size_t(associateRequest.length + 6));
+    if (buffer.buffer == NULL)  return EC_MemoryExhausted;
+
+    cond = streamAssociatePDU(&associateRequest, buffer.buffer,
                               associateRequest.length + 6, &length);
 
     if ((*association)->associatePDUFlag)
@@ -2583,7 +2595,7 @@ sendAssociationRQTCP(PRIVATE_NETWORKKEY ** /*network*/,
       (*association)->associatePDU = new char[length];
       if ((*association)->associatePDU)
       {
-        memcpy((*association)->associatePDU, b, (size_t) length);
+        memcpy((*association)->associatePDU, buffer.buffer, (size_t) length);
         (*association)->associatePDULength = length;
       }
     }
@@ -2594,7 +2606,7 @@ sendAssociationRQTCP(PRIVATE_NETWORKKEY ** /*network*/,
         return cond;
 
     do {
-      nbytes = (*association)->connection ? (*association)->connection->write((char*)b, size_t(associateRequest.length + 6)) : 0;
+      nbytes = (*association)->connection ? (*association)->connection->write((char*)buffer.buffer, size_t(associateRequest.length + 6)) : 0;
     } while (nbytes == -1 && OFStandard::getLastNetworkErrorCode().value() == DCMNET_EINTR);
     if ((unsigned long) nbytes != associateRequest.length + 6)
     {
@@ -2603,7 +2615,6 @@ sendAssociationRQTCP(PRIVATE_NETWORKKEY ** /*network*/,
       msg += ") occurred in routine: sendAssociationRQTCP";
       return makeDcmnetCondition(DULC_TCPIOERROR, OF_error, msg.c_str());
     }
-    if (b != buffer) free(b);
     return EC_Normal;
 }
 
@@ -2632,9 +2643,7 @@ sendAssociationACTCP(PRIVATE_NETWORKKEY ** /*network*/,
 {
     PRV_ASSOCIATEPDU
     associateReply;
-    unsigned char
-        buffer[4096],
-       *b;
+    BufferGuard buffer;
     unsigned long length = 0;
     int nbytes;
     DUL_ASSOCIATESERVICEPARAMETERS localService;
@@ -2652,12 +2661,9 @@ sendAssociationACTCP(PRIVATE_NETWORKKEY ** /*network*/,
     }
 
     // we need to have length+6 bytes in buffer, but 4 bytes reserve won't hurt
-    if (associateReply.length + 10 <= sizeof(buffer)) b = buffer;
-    else {
-        b = (unsigned char*)malloc(size_t(associateReply.length + 10));
-        if (b == NULL)  return EC_MemoryExhausted;
-    }
-    cond = streamAssociatePDU(&associateReply, b,
+    buffer.buffer = (unsigned char*)malloc(size_t(associateReply.length + 10));
+
+    cond = streamAssociatePDU(&associateReply, buffer.buffer,
                               associateReply.length + 10, &length);
 
     if ((*association)->associatePDUFlag)
@@ -2666,7 +2672,7 @@ sendAssociationACTCP(PRIVATE_NETWORKKEY ** /*network*/,
       (*association)->associatePDU = new char[length];
       if ((*association)->associatePDU)
       {
-        memcpy((*association)->associatePDU, b, (size_t) length);
+        memcpy((*association)->associatePDU, buffer.buffer, (size_t) length);
         (*association)->associatePDULength = length;
       }
     }
@@ -2677,7 +2683,7 @@ sendAssociationACTCP(PRIVATE_NETWORKKEY ** /*network*/,
     if (cond.bad()) return cond;
 
     do {
-      nbytes = (*association)->connection ? (*association)->connection->write((char*)b, size_t(associateReply.length + 6)) : 0;
+      nbytes = (*association)->connection ? (*association)->connection->write((char*)buffer.buffer, size_t(associateReply.length + 6)) : 0;
     } while (nbytes == -1 && OFStandard::getLastNetworkErrorCode().value() == DCMNET_EINTR);
     if ((unsigned long) nbytes != associateReply.length + 6)
     {
@@ -2686,7 +2692,6 @@ sendAssociationACTCP(PRIVATE_NETWORKKEY ** /*network*/,
       msg += ") occurred in routine: sendAssociationACTCP";
       return makeDcmnetCondition(DULC_TCPIOERROR, OF_error, msg.c_str());
     }
-    if (b != buffer) free(b);
     return EC_Normal;
 }
 
@@ -2718,9 +2723,7 @@ sendAssociationRJTCP(PRIVATE_NETWORKKEY ** /*network*/,
 
     DUL_REJECTRELEASEABORTPDU
         pdu;
-    unsigned char
-        buffer[64],
-       *b;
+    BufferGuard buffer;
     unsigned long
         length;
     int
@@ -2729,13 +2732,10 @@ sendAssociationRJTCP(PRIVATE_NETWORKKEY ** /*network*/,
 
     OFCondition cond = constructAssociateRejectPDU((unsigned char) abortItems->result,
         (unsigned char) abortItems->source, (unsigned char) abortItems->reason, &pdu);
-    if (pdu.length + 6 <= sizeof(buffer))
-        b = buffer;
-    else {
-        b = (unsigned char*)malloc(size_t(pdu.length + 6));
-        if (b == NULL)  return EC_MemoryExhausted;
-    }
-    cond = streamRejectReleaseAbortPDU(&pdu, b, pdu.length + 6, &length);
+    buffer.buffer = (unsigned char*)malloc(size_t(pdu.length + 6));
+    if (buffer.buffer == NULL)  return EC_MemoryExhausted;
+
+    cond = streamRejectReleaseAbortPDU(&pdu, buffer.buffer, pdu.length + 6, &length);
 
     if ((*association)->associatePDUFlag)
     {
@@ -2743,7 +2743,7 @@ sendAssociationRJTCP(PRIVATE_NETWORKKEY ** /*network*/,
       (*association)->associatePDU = new char[length];
       if ((*association)->associatePDU)
       {
-        memcpy((*association)->associatePDU, b, (size_t) length);
+        memcpy((*association)->associatePDU, buffer.buffer, (size_t) length);
         (*association)->associatePDULength = length;
       }
     }
@@ -2751,7 +2751,7 @@ sendAssociationRJTCP(PRIVATE_NETWORKKEY ** /*network*/,
     if (cond.good())
     {
         do {
-          nbytes = (*association)->connection ? (*association)->connection->write((char*)b, size_t(pdu.length + 6)) : 0;
+          nbytes = (*association)->connection ? (*association)->connection->write((char*)buffer.buffer, size_t(pdu.length + 6)) : 0;
         } while (nbytes == -1 && OFStandard::getLastNetworkErrorCode().value() == DCMNET_EINTR);
         if ((unsigned long) nbytes != pdu.length + 6)
         {
@@ -2761,7 +2761,6 @@ sendAssociationRJTCP(PRIVATE_NETWORKKEY ** /*network*/,
           return makeDcmnetCondition(DULC_TCPIOERROR, OF_error, msg.c_str());
         }
     }
-    if (b != buffer) free(b);
     return cond;
 }
 
@@ -2790,9 +2789,7 @@ sendAbortTCP(DUL_ABORTITEMS * abortItems,
 {
     DUL_REJECTRELEASEABORTPDU
     pdu;
-    unsigned char
-        buffer[64],
-       *b;
+    BufferGuard buffer;
     unsigned long
         length;
     int
@@ -2802,16 +2799,13 @@ sendAbortTCP(DUL_ABORTITEMS * abortItems,
     if (cond.bad())
         return cond;
 
-    if (pdu.length + 6 <= sizeof(buffer))
-        b = buffer;
-    else {
-        b = (unsigned char*)malloc(size_t(pdu.length + 6));
-        if (b == NULL)  return EC_MemoryExhausted;
-    }
-    cond = streamRejectReleaseAbortPDU(&pdu, b, pdu.length + 6, &length);
+    buffer.buffer = (unsigned char*)malloc(size_t(pdu.length + 6));
+    if (buffer.buffer == NULL)  return EC_MemoryExhausted;
+
+    cond = streamRejectReleaseAbortPDU(&pdu, buffer.buffer, pdu.length + 6, &length);
     if (cond.good()) {
         do {
-          nbytes = (*association)->connection ? (*association)->connection->write((char*)b, size_t(pdu.length + 6)) : 0;
+          nbytes = (*association)->connection ? (*association)->connection->write((char*)buffer.buffer, size_t(pdu.length + 6)) : 0;
         } while (nbytes == -1 && OFStandard::getLastNetworkErrorCode().value() == DCMNET_EINTR);
         if ((unsigned long) nbytes != pdu.length + 6)
         {
@@ -2821,7 +2815,6 @@ sendAbortTCP(DUL_ABORTITEMS * abortItems,
           return makeDcmnetCondition(DULC_TCPIOERROR, OF_error, msg.c_str());
         }
     }
-    if (b != buffer) free(b);
 
     return cond;
 }
@@ -2850,9 +2843,7 @@ sendReleaseRQTCP(PRIVATE_ASSOCIATIONKEY ** association)
 {
     DUL_REJECTRELEASEABORTPDU
     pdu;
-    unsigned char
-        buffer[64],
-       *b;
+    BufferGuard buffer;
     unsigned long
         length;
     int
@@ -2862,16 +2853,13 @@ sendReleaseRQTCP(PRIVATE_ASSOCIATIONKEY ** association)
     if (cond.bad())
         return cond;
 
-    if (pdu.length + 6 <= sizeof(buffer))
-        b = buffer;
-    else {
-        b = (unsigned char*)malloc(size_t(pdu.length + 6));
-        if (b == NULL)  return EC_MemoryExhausted;
-    }
-    cond = streamRejectReleaseAbortPDU(&pdu, b, pdu.length + 6, &length);
+    buffer.buffer = (unsigned char*)malloc(size_t(pdu.length + 6));
+    if (buffer.buffer == NULL)  return EC_MemoryExhausted;
+
+    cond = streamRejectReleaseAbortPDU(&pdu, buffer.buffer, pdu.length + 6, &length);
     if (cond.good()) {
         do {
-          nbytes = (*association)->connection ? (*association)->connection->write((char*)b, size_t(pdu.length + 6)) : 0;
+          nbytes = (*association)->connection ? (*association)->connection->write((char*)buffer.buffer, size_t(pdu.length + 6)) : 0;
         } while (nbytes == -1 && OFStandard::getLastNetworkErrorCode().value() == DCMNET_EINTR);
         if ((unsigned long) nbytes != pdu.length + 6)
         {
@@ -2881,8 +2869,6 @@ sendReleaseRQTCP(PRIVATE_ASSOCIATIONKEY ** association)
           return makeDcmnetCondition(DULC_TCPIOERROR, OF_error, msg.c_str());
         }
     }
-    if (b != buffer)
-        free(b);
 
     return cond;
 }
@@ -2912,8 +2898,7 @@ sendReleaseRPTCP(PRIVATE_ASSOCIATIONKEY ** association)
 {
     DUL_REJECTRELEASEABORTPDU
     pdu;
-    unsigned char buffer[64],
-       *b;
+    BufferGuard buffer;
     unsigned long
         length;
     int
@@ -2923,16 +2908,13 @@ sendReleaseRPTCP(PRIVATE_ASSOCIATIONKEY ** association)
     if (cond.bad())
         return cond;
 
-    if (pdu.length + 6 <= sizeof(buffer))
-        b = buffer;
-    else {
-        b = (unsigned char*)malloc(size_t(pdu.length + 6));
-        if (b == NULL)  return EC_MemoryExhausted;
-    }
-    cond = streamRejectReleaseAbortPDU(&pdu, b, pdu.length + 6, &length);
+    buffer.buffer = (unsigned char*)malloc(size_t(pdu.length + 6));
+    if (buffer.buffer == NULL)  return EC_MemoryExhausted;
+
+    cond = streamRejectReleaseAbortPDU(&pdu, buffer.buffer, pdu.length + 6, &length);
     if (cond.good()) {
         do {
-          nbytes = (*association)->connection ? (*association)->connection->write((char*)b, size_t(pdu.length + 6)) : 0;
+          nbytes = (*association)->connection ? (*association)->connection->write((char*)buffer.buffer, size_t(pdu.length + 6)) : 0;
         } while (nbytes == -1 && OFStandard::getLastNetworkErrorCode().value() == DCMNET_EINTR);
         if ((unsigned long) nbytes != pdu.length + 6)
         {
@@ -2942,7 +2924,6 @@ sendReleaseRPTCP(PRIVATE_ASSOCIATIONKEY ** association)
           return makeDcmnetCondition(DULC_TCPIOERROR, OF_error, msg.c_str());
         }
     }
-    if (b != buffer) free(b);
 
     return cond;
 }
@@ -3000,7 +2981,7 @@ sendPDataTCP(PRIVATE_ASSOCIATIONKEY ** association,
     else if (maxLength < 14)
     {
        char buf[256];
-       sprintf(buf, "DUL Cannot send P-DATA PDU because receiver's max PDU size of %lu is illegal (must be > 12)", maxLength);
+       OFStandard::snprintf(buf, sizeof(buf), "DUL Cannot send P-DATA PDU because receiver's max PDU size of %lu is illegal (must be > 12)", maxLength);
        cond = makeDcmnetCondition(DULC_ILLEGALPDULENGTH, OF_error, buf);
     }
     else maxLength -= 12;
@@ -3253,7 +3234,7 @@ PRV_NextPDUType(PRIVATE_ASSOCIATIONKEY ** association, DUL_BLOCKOPTIONS block,
 **      association     Handle to the Association
 **      block           Blocking/non-blocking options for reading
 **      timeout         Timeout interval for reading
-**      buffer          Buffer holding the PDU (returned to the caller)
+**      buffer          Buffer holding the PDU (allocated and returned to the caller)
 **      PDUType         Type of the PDU (returned to the caller)
 **      PDUReserved     Reserved field of the PDU (returned to caller)
 **      PDULength       Length of PDU read (returned to caller)
@@ -3276,14 +3257,12 @@ PRV_NextPDUType(PRIVATE_ASSOCIATIONKEY ** association, DUL_BLOCKOPTIONS block,
 
 static OFCondition
 readPDU(PRIVATE_ASSOCIATIONKEY ** association, DUL_BLOCKOPTIONS block,
-        int timeout, unsigned char **buffer,
+        int timeout, BufferGuard& buffer,
         unsigned char *pduType, unsigned char *pduReserved,
         unsigned long *pduLength)
 {
     OFCondition cond = EC_Normal;
     unsigned long maxLength;
-
-    *buffer = NULL;
     if ((*association)->inputPDU == NO_PDU) {
         cond = readPDUHead(association, (*association)->pduHead,
                            sizeof((*association)->pduHead),
@@ -3303,12 +3282,12 @@ readPDU(PRIVATE_ASSOCIATIONKEY ** association, DUL_BLOCKOPTIONS block,
     }
 
     maxLength = ((*association)->nextPDULength)+100;
-    *buffer = (unsigned char *)malloc(size_t(maxLength));
-    if (*buffer)
+    buffer.buffer = (unsigned char *)malloc(size_t(maxLength));
+    if (buffer.buffer)
     {
-      (void) memcpy(*buffer, (*association)->pduHead, sizeof((*association)->pduHead));
+      (void) memcpy(buffer.buffer, (*association)->pduHead, sizeof((*association)->pduHead));
       cond = readPDUBody(association, block, timeout,
-        (*buffer) + sizeof((*association)->pduHead),
+        (buffer.buffer) + sizeof((*association)->pduHead),
         maxLength - sizeof((*association)->pduHead),
         pduType, pduReserved, pduLength);
     } else cond = EC_MemoryExhausted;
@@ -3375,7 +3354,7 @@ readPDUHead(PRIVATE_ASSOCIATIONKEY ** association,
         if ((*PDUType == DUL_TYPEDATA) && (*PDULength > (*association)->maxPDVInput))
         {
           char buf1[256];
-          sprintf(buf1, "DUL Illegal PDU Length %ld.  Max expected %ld", *PDULength, (*association)->maxPDVInput);
+          OFStandard::snprintf(buf1, sizeof(buf1), "DUL Illegal PDU Length %ld.  Max expected %ld", *PDULength, (*association)->maxPDVInput);
           cond = makeDcmnetCondition(DULC_ILLEGALPDULENGTH, OF_error, buf1);
         }
     }
@@ -3519,7 +3498,7 @@ readPDUHeadTCP(PRIVATE_ASSOCIATIONKEY ** association,
     if (!found)
     {
         char buf[256];
-        sprintf(buf, "Unrecognized PDU type: %2x", *type);
+        OFStandard::snprintf(buf, sizeof(buf), "Unrecognized PDU type: %2x", *type);
         return makeDcmnetCondition(DULC_UNRECOGNIZEDPDUTYPE, OF_error, buf);
     }
 
@@ -3901,7 +3880,7 @@ translatePresentationContextList(LST_HEAD ** internalList,
         if (subItem == NULL)
         {
             char buf1[256];
-            sprintf(buf1, "DUL Peer supplied illegal number of transfer syntaxes (%d)", 0);
+            OFStandard::snprintf(buf1, sizeof(buf1), "DUL Peer supplied illegal number of transfer syntaxes (%d)", 0);
             free(userContext);
             return makeDcmnetCondition(DULC_PEERILLEGALXFERSYNTAXCOUNT, OF_error, buf1);
         }

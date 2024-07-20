@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 1994-2023, OFFIS e.V.
+#  Copyright (C) 1994-2024, OFFIS e.V.
 #  All rights reserved.  See COPYRIGHT file for details.
 #
 #  This software and supporting documentation were developed by
@@ -21,8 +21,8 @@
 # DICONDE (Digital Imaging and Communication in Nondestructive Evaluation) and
 # DICOS (Digital Imaging and Communications in Security) standard.
 #
-# Generated automatically from DICOM PS 3.6-2023c and PS 3.7-2023c.
-# File created on 2023-07-14 12:17:55 by J. Riesmeier on thinkpad2.
+# Generated automatically from DICOM PS 3.6-2024c and PS 3.7-2024c.
+# File created on 2024-07-04 10:02:47 by J. Riesmeier on thinkpad2.
 #
 # In addition, the data dictionary entries from the following final text
 # supplements and correction items (CP) have been incorporated:
@@ -122,6 +122,7 @@
 (0008,0019)	UI	PyramidUID	1	DICOM
 (0008,001A)	UI	RelatedGeneralSOPClassUID	1-n	DICOM
 (0008,001B)	UI	OriginalSpecializedSOPClassUID	1	DICOM
+(0008,001C)	CS	SyntheticData	1	DICOM
 (0008,0020)	DA	StudyDate	1	DICOM
 (0008,0021)	DA	SeriesDate	1	DICOM
 (0008,0022)	DA	AcquisitionDate	1	DICOM
@@ -268,6 +269,7 @@
 (0008,1090)	LO	ManufacturerModelName	1	DICOM
 (0008,1110)	SQ	ReferencedStudySequence	1	DICOM
 (0008,1111)	SQ	ReferencedPerformedProcedureStepSequence	1	DICOM
+(0008,1112)	SQ	ReferencedInstancesBySOPClassSequence	1	DICOM
 (0008,1115)	SQ	ReferencedSeriesSequence	1	DICOM
 (0008,1120)	SQ	ReferencedPatientSequence	1	DICOM
 (0008,1125)	SQ	ReferencedVisitSequence	1	DICOM
@@ -293,6 +295,7 @@
 (0008,1198)	SQ	FailedSOPSequence	1	DICOM
 (0008,1199)	SQ	ReferencedSOPSequence	1	DICOM
 (0008,119A)	SQ	OtherFailuresSequence	1	DICOM
+(0008,119B)	SQ	FailedStudySequence	1	DICOM
 (0008,1200)	SQ	StudiesContainingOtherReferencedInstancesSequence	1	DICOM
 (0008,1250)	SQ	RelatedSeriesSequence	1	DICOM
 (0008,2111)	ST	DerivationDescription	1	DICOM
@@ -391,6 +394,7 @@
 (0010,2154)	SH	PatientTelephoneNumbers	1-n	DICOM
 (0010,2155)	LT	PatientTelecomInformation	1	DICOM
 (0010,2160)	SH	EthnicGroup	1	DICOM
+(0010,2161)	SQ	EthnicGroupCodeSequence	1	DICOM
 (0010,2180)	SH	Occupation	1	DICOM
 (0010,21A0)	CS	SmokingStatus	1	DICOM
 (0010,21B0)	LT	AdditionalPatientHistory	1	DICOM
@@ -414,21 +418,28 @@
 (0012,0010)	LO	ClinicalTrialSponsorName	1	DICOM
 (0012,0020)	LO	ClinicalTrialProtocolID	1	DICOM
 (0012,0021)	LO	ClinicalTrialProtocolName	1	DICOM
+(0012,0022)	LO	IssuerOfClinicalTrialProtocolID	1	DICOM
+(0012,0023)	SQ	OtherClinicalTrialProtocolIDsSequence	1	DICOM
 (0012,0030)	LO	ClinicalTrialSiteID	1	DICOM
 (0012,0031)	LO	ClinicalTrialSiteName	1	DICOM
+(0012,0032)	LO	IssuerOfClinicalTrialSiteID	1	DICOM
 (0012,0040)	LO	ClinicalTrialSubjectID	1	DICOM
+(0012,0041)	LO	IssuerOfClinicalTrialSubjectID	1	DICOM
 (0012,0042)	LO	ClinicalTrialSubjectReadingID	1	DICOM
+(0012,0043)	LO	IssuerOfClinicalTrialSubjectReadingID	1	DICOM
 (0012,0050)	LO	ClinicalTrialTimePointID	1	DICOM
 (0012,0051)	ST	ClinicalTrialTimePointDescription	1	DICOM
 (0012,0052)	FD	LongitudinalTemporalOffsetFromEvent	1	DICOM
 (0012,0053)	CS	LongitudinalTemporalEventType	1	DICOM
 (0012,0054)	SQ	ClinicalTrialTimePointTypeCodeSequence	1	DICOM
+(0012,0055)	LO	IssuerOfClinicalTrialTimePointID	1	DICOM
 (0012,0060)	LO	ClinicalTrialCoordinatingCenterName	1	DICOM
 (0012,0062)	CS	PatientIdentityRemoved	1	DICOM
 (0012,0063)	LO	DeidentificationMethod	1-n	DICOM
 (0012,0064)	SQ	DeidentificationMethodCodeSequence	1	DICOM
 (0012,0071)	LO	ClinicalTrialSeriesID	1	DICOM
 (0012,0072)	LO	ClinicalTrialSeriesDescription	1	DICOM
+(0012,0073)	LO	IssuerOfClinicalTrialSeriesID	1	DICOM
 (0012,0081)	LO	ClinicalTrialProtocolEthicsCommitteeName	1	DICOM
 (0012,0082)	LO	ClinicalTrialProtocolEthicsCommitteeApprovalNumber	1	DICOM
 (0012,0083)	SQ	ConsentForClinicalTrialUseSequence	1	DICOM
@@ -1718,6 +1729,7 @@
 (0022,000C)	FL	HorizontalFieldOfView	1	DICOM
 (0022,000D)	CS	PupilDilated	1	DICOM
 (0022,000E)	FL	DegreeOfDilation	1	DICOM
+(0022,000F)	FD	VertexDistance	1	DICOM
 (0022,0010)	FL	StereoBaselineAngle	1	DICOM
 (0022,0011)	FL	StereoBaselineDisplacement	1	DICOM
 (0022,0012)	FL	StereoHorizontalPixelOffset	1	DICOM
@@ -2179,7 +2191,6 @@
 (0034,000B)	SQ	CameraPositionGroupSequence	1	DICOM
 (0034,000C)	CS	IncludesInformation	1	DICOM
 (0034,000D)	SQ	TimeOfFrameGroupSequence	1	DICOM
-(0038,0004)	SQ	ReferencedPatientAliasSequence	1	DICOM
 (0038,0008)	CS	VisitStatusID	1	DICOM
 (0038,0010)	LO	AdmissionID	1	DICOM
 (0038,0014)	SQ	IssuerOfAdmissionIDSequence	1	DICOM
@@ -2638,6 +2649,10 @@
 (0048,0111)	DS	CondenserLensPower	1	DICOM
 (0048,0112)	DS	ObjectiveLensPower	1	DICOM
 (0048,0113)	DS	ObjectiveLensNumericalAperture	1	DICOM
+(0048,0114)	CS	ConfocalMode	1	DICOM
+(0048,0115)	CS	TissueLocation	1	DICOM
+(0048,0116)	SQ	ConfocalMicroscopyImageFrameTypeSequence	1	DICOM
+(0048,0117)	FD	ImageAcquisitionDepth	1	DICOM
 (0048,0120)	SQ	PaletteColorLookupTableSequence	1	DICOM
 (0048,0207)	SQ	OpticalPathIdentificationSequence	1	DICOM
 (0048,021A)	SQ	PlanePositionSlideSequence	1	DICOM
@@ -3116,8 +3131,6 @@
 (0070,1804)	US	VolumetricPresentationInputIndex	1	DICOM
 (0070,1805)	SQ	PresentationStateCompositorComponentSequence	1	DICOM
 (0070,1806)	SQ	WeightingTransferFunctionSequence	1	DICOM
-(0070,1807)	US	WeightingLookupTableDescriptor	3	DICOM
-(0070,1808)	OB	WeightingLookupTableData	1	DICOM
 (0070,1901)	SQ	VolumetricAnnotationSequence	1	DICOM
 (0070,1903)	SQ	ReferencedStructuredContextSequence	1	DICOM
 (0070,1904)	UI	ReferencedContentItem	1	DICOM
@@ -3648,6 +3661,8 @@
 (3006,0028)	ST	ROIDescription	1	DICOM
 (3006,002A)	IS	ROIDisplayColor	3	DICOM
 (3006,002C)	DS	ROIVolume	1	DICOM
+(3006,002D)	DT	ROIDateTime	1	DICOM
+(3006,002E)	DT	ROIObservationDateTime	1	DICOM
 (3006,0030)	SQ	RTRelatedROISequence	1	DICOM
 (3006,0033)	CS	RTROIRelationship	1	DICOM
 (3006,0036)	CS	ROIGenerationAlgorithm	1	DICOM
@@ -3659,6 +3674,11 @@
 (3006,0046)	IS	NumberOfContourPoints	1	DICOM
 (3006,0048)	IS	ContourNumber	1	DICOM
 (3006,004A)	SQ	SourcePixelPlanesCharacteristicsSequence	1	DICOM
+(3006,004B)	SQ	SourceSeriesSequence	1	DICOM
+(3006,004C)	SQ	SourceSeriesInformationSequence	1	DICOM
+(3006,004D)	SQ	ROICreatorSequence	1	DICOM
+(3006,004E)	SQ	ROIInterpreterSequence	1	DICOM
+(3006,004F)	SQ	ROIObservationContextCodeSequence	1	DICOM
 (3006,0050)	DS	ContourData	3-3n	DICOM
 (3006,0080)	SQ	RTROIObservationsSequence	1	DICOM
 (3006,0082)	IS	ObservationNumber	1	DICOM
@@ -3821,6 +3841,7 @@
 (300A,0051)	DS	TableTopVerticalPositionTolerance	1	DICOM
 (300A,0052)	DS	TableTopLongitudinalPositionTolerance	1	DICOM
 (300A,0053)	DS	TableTopLateralPositionTolerance	1	DICOM
+(300A,0054)	UI	TableTopPositionAlignmentUID	1	DICOM
 (300A,0055)	CS	RTPlanRelationship	1	DICOM
 (300A,0070)	SQ	FractionGroupSequence	1	DICOM
 (300A,0071)	IS	FractionGroupNumber	1	DICOM
@@ -4311,6 +4332,7 @@
 (300A,0688)	FD	RTBeamModifierDefinitionDistance	1	DICOM
 (300A,0689)	SQ	BeamAreaLimitSequence	1	DICOM
 (300A,068A)	SQ	ReferencedRTPrescriptionSequence	1	DICOM
+(300A,068B)	CS	DoseValueInterpretation	1	DICOM
 (300A,0700)	UI	TreatmentSessionUID	1	DICOM
 (300A,0701)	CS	RTRadiationUsage	1	DICOM
 (300A,0702)	SQ	ReferencedRTRadiationSetSequence	1	DICOM
@@ -4379,6 +4401,9 @@
 (300A,079C)	SQ	PatientSupportDisplacementSequence	1	DICOM
 (300A,079D)	SQ	DisplacementReferenceLocationCodeSequence	1	DICOM
 (300A,079E)	CS	RTRadiationSetDeliveryUsage	1	DICOM
+(300A,079F)	SQ	PatientTreatmentPreparationSequence	1	DICOM
+(300A,07A0)	SQ	PatientToEquipmentRelationshipSequence	1	DICOM
+(300A,07A1)	SQ	ImagingEquipmentToTreatmentDeliveryDeviceRelationshipSequence	1	DICOM
 (300C,0002)	SQ	ReferencedRTPlanSequence	1	DICOM
 (300C,0004)	SQ	ReferencedBeamSequence	1	DICOM
 (300C,0006)	IS	ReferencedBeamNumber	1	DICOM
@@ -4428,6 +4453,7 @@
 (300C,0126)	CS	BeamHoldTransition	1	DICOM
 (300C,0127)	DT	BeamHoldTransitionDateTime	1	DICOM
 (300C,0128)	SQ	BeamHoldOriginatingDeviceSequence	1	DICOM
+(300C,0129)	CS	BeamHoldTransitionTriggerSource	1	DICOM
 (300E,0002)	CS	ApprovalStatus	1	DICOM
 (300E,0004)	DA	ReviewDate	1	DICOM
 (300E,0005)	TM	ReviewTime	1	DICOM
@@ -4917,6 +4943,7 @@
 (0032,1051)	TM	RETIRED_StudyCompletionTime	1	DICOM/retired
 (0032,1055)	CS	RETIRED_StudyComponentStatusID	1	DICOM/retired
 (0032,4000)	LT	RETIRED_StudyComments	1	DICOM/retired
+(0038,0004)	SQ	RETIRED_ReferencedPatientAliasSequence	1	DICOM/retired
 (0038,0011)	LO	RETIRED_IssuerOfAdmissionID	1	DICOM/retired
 (0038,001A)	DA	RETIRED_ScheduledAdmissionDate	1	DICOM/retired
 (0038,001B)	TM	RETIRED_ScheduledAdmissionTime	1	DICOM/retired
@@ -5035,6 +5062,8 @@
 (0070,0051)	US	RETIRED_DisplayedAreaBottomRightHandCornerTrial	2	DICOM/retired
 (0070,0067)	US	RETIRED_GraphicLayerRecommendedDisplayRGBValue	3	DICOM/retired
 (0070,1206)	CS	RETIRED_CompositingMethod	1	DICOM/retired
+(0070,1807)	US	RETIRED_WeightingLookupTableDescriptor	3	DICOM/retired
+(0070,1808)	OB	RETIRED_WeightingLookupTableData	1	DICOM/retired
 (0074,1024)	IS	RETIRED_BeamOrderIndexTrial	1	DICOM/retired
 (0074,1038)	DS	RETIRED_DoubleExposureMetersetTrial	1	DICOM/retired
 (0074,103A)	DS	RETIRED_DoubleExposureFieldDeltaTrial	4	DICOM/retired
